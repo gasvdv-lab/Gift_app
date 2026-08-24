@@ -1,4 +1,4 @@
-# Gift AR — v0.3.2
+# Gift AR — v0.4.0
 
 ## Vaste app-link
 https://gasvdv-lab.github.io/Gift_app/
@@ -9,85 +9,133 @@ CANDIDATE
 ## Stabiele baseline
 v0.2.0 — Camera Core, bevestigd werkend op Android/Chrome.
 
-## Doel
-v0.3.2 onderzoekt lichtrobustheid van de Recognition Engine.
+## Waarom v0.4.0
+De globale beeldvergelijking uit v0.3.x bleek onvoldoende robuust.
+Het correcte testobject zakte onder veranderde omstandigheden tot ongeveer 57–66%.
 
-Aanleiding: hetzelfde geregistreerde object zakte bij veranderend avondlicht van ongeveer 88% naar 63–66%. De UI-correctie uit v0.3.1 blijft behouden.
+Daarom wordt de Recognition Engine in v0.4.0 fundamenteel vervangen in plaats van verder kleine patches toe te voegen.
 
-## Wat verandert
-- Geen wijziging aan Camera Core.
-- Geen wijziging aan fullscreen recognition-UI.
-- Nieuwe descriptor die veel minder op absolute helderheid steunt.
-- Sterker genormaliseerde lokale structuur.
-- Edge/randdescriptor krijgt het grootste gewicht.
-- Kleurinformatie is teruggebracht tot slechts 5%.
-- Eén `Registreer aanzicht` verzamelt nu 7 frames over ongeveer 0,8 seconde.
-- Die frames worden gemiddeld tot één stabieler referentieprofiel.
-- Nieuwe, voorlopige herkenningsdrempel: 74%.
+## Nieuwe Recognition Engine 2
+v0.4.0 gebruikt een feature-based prototype zonder externe dependencies.
+
+Flow:
+1. centraal scanvak capturen;
+2. helderheid normaliseren;
+3. lokale hoek-/kenmerkpunten zoeken;
+4. voor elk kenmerk een compacte BRIEF-achtige descriptor maken;
+5. live descriptors matchen met geregistreerde descriptors;
+6. slechte matches verwijderen met een ratio-test;
+7. geometrische consistentie controleren met een similarity-transform;
+8. confidence bepalen uit het aantal geometrisch bevestigde matches.
+
+## Diagnostiek
+Tijdens registratie:
+- aantal gevonden kenmerken;
+- spreiding over het scanvak;
+- herkenbaarheid: GOED / MATIG / MOEILIJK.
+
+Tijdens herkenning:
+- live kenmerken;
+- goede matches;
+- geometrisch bevestigde matches;
+- confidence: GEEN / LAAG / MIDDEL / HOOG.
+
+`CADEAU HERKEND` verschijnt alleen bij MIDDEL of HOOG.
 
 ## Belangrijk
-De percentages van v0.3.2 zijn NIET rechtstreeks vergelijkbaar met v0.3.1.
-Het algoritme en dus de schaal van de scores is gewijzigd.
+Dit is nog steeds een onderzoeksprototype.
+Feature matching werkt normaal beter bij objecten met:
+- textuur;
+- scherpe contrasten;
+- unieke krassen/patronen;
+- linten/strikken/stickers.
 
-We beoordelen vooral de scheiding tussen:
-- juist object;
-- verkeerd object;
-- andere achtergrond;
-- ander licht.
+Een effen rode aansteker is bewust een moeilijk object.
+Een steen met een duidelijk patroon en strik is voor dit project waarschijnlijk een veel betere test.
 
-Een lager absoluut percentage kan beter zijn als verkeerde objecten nog veel lager scoren.
+## Geen regressies bedoeld
+De volgende onderdelen blijven conceptueel onveranderd:
+- fullscreen camera-UI;
+- geen scroll in camera-modus;
+- terugknop;
+- camera cleanup;
+- LocalStorage;
+- Recognition is afzonderlijke module;
+- nog geen WebXR/AR;
+- geen externe dependencies.
 
-## Opslag
-v0.3.2 gebruikt een nieuwe LocalStorage-sleutel.
-Registraties uit v0.3.0/v0.3.1 worden bewust niet hergebruikt omdat de descriptor incompatibel is.
+## Nieuwe opslag
+v0.4.0 gebruikt een nieuwe LocalStorage-sleutel.
+Registraties uit v0.3.x zijn niet compatibel en worden niet gebruikt.
 
-## Praktijktest
+## Praktijktest Android/Chrome
 
 ### A — regressie
 1. Open https://gasvdv-lab.github.io/Gift_app/
-2. Controleer versie 0.3.2.
+2. Controleer versie 0.4.0 en baseline 0.2.0.
 3. Voer Basistest uit.
-4. Open/sluit camera minstens 5 keer.
-5. Controleer fullscreen UI en terugknop.
+4. Open en sluit de camera minstens vijf keer.
+5. Zet Chrome tijdens cameragebruik naar de achtergrond.
+6. Keer terug en controleer dat de camera opnieuw normaal kan starten.
+7. Controleer dat fullscreen UI, terugknop en geen-scroll gedrag behouden zijn.
 
-### B — nieuwe registratie
-6. Kies Object registreren.
-7. Plaats het object zo groot mogelijk binnen het kader.
-8. Tik Registreer aanzicht.
-9. Houd object ongeveer 1 seconde stil terwijl 7 samples worden verzameld.
-10. Draai ongeveer 20–40 graden.
-11. Registreer aanzicht 2.
-12. Draai opnieuw.
-13. Registreer aanzicht 3.
+### B — registratie
+8. Kies liefst een object met veel unieke details. Voor het echte Gift AR-concept: steen + strik.
+9. Open Object registreren.
+10. Laat het object zoveel mogelijk het witte kader vullen.
+11. Registreer aanzicht 1.
+12. Noteer Kenmerken, Spreiding en Herkenbaarheid.
+13. Draai het object ongeveer 20–35 graden.
+14. Registreer aanzicht 2.
+15. Draai nogmaals en registreer aanzicht 3.
 
-### C —zelfde licht
-14. Open Object herkennen.
-15. Test het juiste object.
-16. Noteer typische en hoogste score.
-17. Test minstens drie verkeerde objecten.
-18. Noteer de hoogste foute score.
+Als een aanzicht minder dan 18 bruikbare kenmerken bevat, wordt het niet opgeslagen.
 
-### D — ander licht
-19. Verander de verlichting duidelijk, bijvoorbeeld lamp aan/uit of andere kamer.
-20. Test opnieuw het juiste object.
-21. Noteer typische en hoogste score.
-22. Test opnieuw een verkeerd object.
+### C — juiste herkenning
+16. Open Object herkennen.
+17. Start herkennen.
+18. Richt op het juiste object.
+19. Test verschillende kleine hoeken en afstanden.
+20. Noteer Live kenmerken, Goede matches, Geometrisch bevestigd en Confidence.
 
-### E — achtergrond
-23. Plaats het juiste object op een andere ondergrond/achtergrond.
-24. Test opnieuw.
-25. Test de oorspronkelijke achtergrond zonder het object.
+### D — verkeerde objecten
+21. Richt op de oorspronkelijke achtergrond zonder cadeau.
+22. Richt op minstens drie compleet andere objecten.
+23. Test indien mogelijk een vergelijkbaar object.
+24. Noteer de hoogste aantallen Goede matches / Geometrisch bevestigd.
+25. Noteer of er een valse `CADEAU HERKEND` melding is.
+
+### E — robuustheid
+26. Verplaats het cadeau naar een andere achtergrond.
+27. Verander het licht.
+28. Draai het cadeau 45–90 graden.
+29. Ga dichter en verder.
+30. Test opnieuw.
 
 ## Wat terugkoppelen
-- juiste object, zelfde licht: typische/hoogste score;
-- juiste object, ander licht: typische/hoogste score;
-- verkeerd object: hoogste score;
-- originele achtergrond zonder object: hoogste score;
-- of er valse `CADEAU HERKEND` meldingen waren.
+Voor het juiste object:
+- gemiddeld aantal live kenmerken;
+- goede matches;
+- geometrisch bevestigde matches;
+- confidence.
+
+Voor het beste verkeerde object:
+- goede matches;
+- geometrisch bevestigde matches;
+- confidence.
+
+En vooral:
+- wordt het juiste object onder andere achtergrond/licht nog herkend?
+- ontstaat ergens een false positive?
 
 ## Succescriterium
-v0.3.2 is geslaagd als veranderend licht de score minder sterk beïnvloedt én het juiste object duidelijk beter blijft scoren dan verkeerde objecten.
+v0.4.0 is interessant genoeg om verder te ontwikkelen als het juiste object herhaaldelijk duidelijk meer geometrisch consistente matches oplevert dan verkeerde objecten.
 
-## Volgende stap
-Als lichtrobustheid voldoende is: v0.3.3 — Background & Viewpoint Robustness.
-Als de scores onvoldoende scheiden, vervangen we de Recognition Engine in plaats van verder kleine patches te stapelen.
+Als dit onvoldoende blijkt, stappen we daarna niet terug naar globale beeldscores, maar onderzoeken we AI/vision embeddings als extra herkenningslaag.
+
+## Volgende kandidaat
+Bij voldoende resultaat:
+v0.4.1 — AI-assisted / hybrid recognition research.
+
+Bij onvoldoende resultaat:
+Recognition Engine 3 ontwerpen op basis van browsergeschikte vision embeddings of een hybride aanpak.

@@ -1,86 +1,96 @@
 <!doctype html>
 <html lang="nl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
-<meta name="theme-color" content="#000000">
-<title>Gift AR v0.3.2</title>
-<link rel="stylesheet" href="./css/app.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Gift AR v0.4.0</title>
+  <link rel="stylesheet" href="./css/app.css">
 </head>
 <body>
-<main id="appRoot">
-<section id="homeView" class="home-view">
-  <div class="home-card">
-    <div class="badge">Gift AR</div>
-    <h1>Recognition Test</h1>
-    <p>v0.3.2 — Lighting Robustness</p>
-    <div id="homeStatus" class="status" role="status" aria-live="polite">App wordt gestart…</div>
+<main>
+  <section id="homeView" class="home-view">
+    <div class="home-card">
+      <div class="badge">Gift AR</div>
+      <h1>Recognition Engine 2</h1>
+      <p>v0.4.0 — Feature-Based Prototype</p>
 
-    <div class="home-actions">
-      <button id="btnEnterRegister">Object registreren</button>
-      <button id="btnEnterRecognize" class="secondary">Object herkennen</button>
-    </div>
+      <div id="homeStatus" class="status" role="status" aria-live="polite">App wordt gestart…</div>
 
-    <div class="note">
-      <strong>Nieuw:</strong> elk aanzicht wordt nu gedurende ±1 seconde uit meerdere frames opgebouwd en vooral op structuur/randen vergeleken.
-    </div>
-
-    <details>
-      <summary>Debug / versie</summary>
-      <dl>
-        <div><dt>Versie</dt><dd id="versionValue">—</dd></div>
-        <div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
-        <div><dt>Referenties</dt><dd id="referenceCountHome">0 / 3</dd></div>
-        <div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
-        <div><dt>Drempel</dt><dd id="thresholdHome">—</dd></div>
-      </dl>
-      <div class="debug-actions">
-        <button id="btnSelfTest" class="secondary">Basistest</button>
-        <button id="btnClearReferencesHome" class="danger">Registratie wissen</button>
-      </div>
-    </details>
-  </div>
-</section>
-
-<section id="cameraView" class="camera-view" aria-hidden="true">
-  <video id="cameraPreview" playsinline muted></video>
-  <canvas id="analysisCanvas" width="64" height="64" hidden></canvas>
-
-  <div class="camera-overlay">
-    <header class="topbar">
-      <button id="btnBack" class="icon-btn" aria-label="Terug">←</button>
-      <div class="mode-title">
-        <strong id="modeTitle">Registreren</strong>
-        <span id="modeSubtitle">Plaats het object in het kader</span>
-      </div>
-      <span></span>
-    </header>
-
-    <div class="scan-area">
-      <div id="scanBox" class="scan-box"></div>
-    </div>
-
-    <div class="feedback">
-      <div id="cameraStatus">Camera starten…</div>
-      <div id="recognitionFeedback" class="recognition-feedback"></div>
-    </div>
-
-    <footer class="bottom-panel">
-      <div id="registerControls" class="mode-controls">
-        <div class="counter">Aanzichten <strong id="referenceCountCamera">0 / 3</strong></div>
-        <div id="captureProgress" class="capture-progress"></div>
-        <button id="btnCaptureReference" class="primary-action">Registreer aanzicht</button>
+      <div class="home-actions">
+        <button id="btnEnterRegister" type="button">Object registreren</button>
+        <button id="btnEnterRecognize" type="button" class="secondary">Object herkennen</button>
       </div>
 
-      <div id="recognizeControls" class="mode-controls hidden">
-        <div class="score-line"><span>Overeenkomst</span><strong id="similarityValue">—</strong></div>
-        <div class="score-line"><span>Voorlopige drempel</span><strong id="thresholdValue">—</strong></div>
-        <button id="btnToggleRecognition" class="primary-action">Start herkennen</button>
+      <div class="note">
+        Deze versie vergelijkt niet langer het volledige beeld. Ze zoekt lokale kenmerkpunten,
+        matcht descriptors en controleert daarna of de geometrie overeenkomt.
       </div>
-    </footer>
-  </div>
-</section>
+
+      <details>
+        <summary>Debug / versie</summary>
+        <dl>
+          <div><dt>Versie</dt><dd id="versionValue">—</dd></div>
+          <div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
+          <div><dt>Aanzichten</dt><dd id="referenceCountHome">0 / 3</dd></div>
+          <div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
+        </dl>
+        <div class="debug-actions">
+          <button id="btnSelfTest" type="button" class="secondary">Basistest</button>
+          <button id="btnClearReferencesHome" type="button" class="danger">Registratie wissen</button>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="cameraView" class="camera-view" aria-hidden="true">
+    <video id="cameraPreview" playsinline muted></video>
+    <canvas id="analysisCanvas" width="96" height="96" hidden></canvas>
+
+    <div class="camera-overlay">
+      <header class="topbar">
+        <button id="btnBack" type="button" class="icon-btn" aria-label="Terug">←</button>
+        <div class="mode-title">
+          <strong id="modeTitle">Object registreren</strong>
+          <span id="modeSubtitle">Plaats het object groot in het kader</span>
+        </div>
+        <span></span>
+      </header>
+
+      <div class="scan-area">
+        <div id="scanBox" class="scan-box"></div>
+      </div>
+
+      <div class="feedback">
+        <div id="cameraStatus">Camera starten…</div>
+        <div id="recognitionFeedback" class="recognition-feedback"></div>
+      </div>
+
+      <footer class="bottom-panel">
+        <div id="registerControls" class="mode-controls">
+          <div class="diagnostics">
+            <div><span>Aanzichten</span><strong id="referenceCountCamera">0 / 3</strong></div>
+            <div><span>Kenmerken</span><strong id="featureCountValue">—</strong></div>
+            <div><span>Spreiding</span><strong id="coverageValue">—</strong></div>
+            <div><span>Herkenbaarheid</span><strong id="qualityValue">—</strong></div>
+          </div>
+          <button id="btnCaptureReference" type="button" class="primary-action">Registreer aanzicht</button>
+        </div>
+
+        <div id="recognizeControls" class="mode-controls hidden">
+          <div class="diagnostics">
+            <div><span>Live kenmerken</span><strong id="liveFeatureCountValue">—</strong></div>
+            <div><span>Goede matches</span><strong id="goodMatchesValue">—</strong></div>
+            <div><span>Geometrisch bevestigd</span><strong id="inliersValue">—</strong></div>
+            <div><span>Confidence</span><strong id="confidenceValue">—</strong></div>
+          </div>
+          <button id="btnToggleRecognition" type="button" class="primary-action">Start herkennen</button>
+        </div>
+      </footer>
+    </div>
+  </section>
 </main>
+
 <script type="module" src="./js/app.js"></script>
 </body>
 </html>
