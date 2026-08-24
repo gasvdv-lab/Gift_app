@@ -1,12 +1,12 @@
 export function getUI(){
   const ids=[
     "homeView","cameraView","homeStatus","btnEnterRegister","btnEnterRecognize","btnBack",
-    "cameraPreview","analysisCanvas","cameraStatus","recognitionFeedback","scanBox",
+    "cameraPreview","analysisCanvas","debugCanvas","cameraStatus","recognitionFeedback","scanBox",
     "modeTitle","modeSubtitle","registerControls","recognizeControls","btnCaptureReference",
-    "btnToggleRecognition","referenceCountCamera","referenceCountHome","versionValue",
-    "baselineValue","cameraStateValue","btnSelfTest","btnClearReferencesHome",
-    "featureCountValue","coverageValue","qualityValue","liveFeatureCountValue",
-    "goodMatchesValue","inliersValue","confidenceValue"
+    "btnToggleRecognition","btnTogglePreview","analysisPreviewPanel","referenceCountCamera",
+    "referenceCountHome","versionValue","baselineValue","cameraStateValue","btnSelfTest",
+    "btnClearReferencesHome","featureCountValue","coverageValue","qualityValue",
+    "liveFeatureCountValue","goodMatchesValue","inliersValue","confidenceValue"
   ];
   const ui={};
   for(const id of ids){

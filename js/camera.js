@@ -17,6 +17,3 @@ export async function stopCamera(video){
   if(video){video.pause();video.srcObject=null}
   activeStream=null;
 }
-export function isCameraRunning(){
-  return !!(activeStream&&activeStream.getVideoTracks().some(t=>t.readyState==="live"));
-}

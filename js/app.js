@@ -12,11 +12,11 @@ import{assetModule}from"./assets.js";
 import{getBasicCapabilities}from"./capabilities.js";
 import{getUI,setHomeStatus}from"./ui.js";
 
-const VERSION="0.4.0";
+const VERSION="0.4.1";
 const BASELINE="0.2.0";
 const modules=[cameraModule,recognitionModule,xrAdapterModule,placementModule,experienceModule,rendererModule,assetModule];
 
-let ui,state,listenersBound=false;
+let ui,state,listenersBound=false,previewVisible=false;
 
 function updateReferenceUI(){
   const count=getReferences().length;
@@ -102,7 +102,7 @@ async function leaveCamera(){
 
 function captureReference(){
   try{
-    const profile=extractFeatures(ui.cameraPreview,ui.analysisCanvas);
+    const profile=extractFeatures(ui.cameraPreview,ui.scanBox,ui.analysisCanvas,previewVisible?ui.debugCanvas:null);
     const count=profile.features.length;
     const coveragePct=Math.round(profile.coverage*100);
     const quality=qualityLabel(count,profile.coverage);
@@ -136,7 +136,9 @@ function toggleRecognition(){
 
     startRecognitionLoop({
       video:ui.cameraPreview,
+      scanBox:ui.scanBox,
       canvas:ui.analysisCanvas,
+      debugCanvas:previewVisible?ui.debugCanvas:null,
       onResult:({liveFeatureCount,goodMatches,inliers,confidence,matched,error})=>{
         if(error){
           console.error(error);
@@ -165,6 +167,18 @@ function toggleRecognition(){
   }
 }
 
+function togglePreview(){
+  previewVisible=!previewVisible;
+  ui.analysisPreviewPanel.classList.toggle("hidden",!previewVisible);
+  ui.btnTogglePreview.textContent=previewVisible?"Verberg analysebeeld":"Toon analysebeeld";
+
+  if(previewVisible && state.mode==="register"){
+    try{
+      extractFeatures(ui.cameraPreview,ui.scanBox,ui.analysisCanvas,ui.debugCanvas);
+    }catch{}
+  }
+}
+
 function clearRegistration(){
   stopRecognition();
   clearReferences();
@@ -189,12 +203,12 @@ function runSelfTest(){
 
 function bindListeners(){
   if(listenersBound)return;
-
   ui.btnEnterRegister.addEventListener("click",()=>enterCamera("register"));
   ui.btnEnterRecognize.addEventListener("click",()=>enterCamera("recognize"));
   ui.btnBack.addEventListener("click",leaveCamera);
   ui.btnCaptureReference.addEventListener("click",captureReference);
   ui.btnToggleRecognition.addEventListener("click",toggleRecognition);
+  ui.btnTogglePreview.addEventListener("click",togglePreview);
   ui.btnClearReferencesHome.addEventListener("click",clearRegistration);
   ui.btnSelfTest.addEventListener("click",runSelfTest);
 

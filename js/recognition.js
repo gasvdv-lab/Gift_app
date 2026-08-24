@@ -1,4 +1,4 @@
-const STORAGE_KEY="gift-ar-v0.4.0-feature-recognition";
+const STORAGE_KEY="gift-ar-v0.4.1-feature-recognition";
 const MAX_REFERENCES=3;
 const SIZE=96;
 const MAX_FEATURES=90;
@@ -19,27 +19,71 @@ function seededPairs(){
   };
   const pairs=[];
   for(let i=0;i<DESCRIPTOR_BITS;i++){
-    const p=()=>({
-      x:Math.round((rand()*2-1)*7),
-      y:Math.round((rand()*2-1)*7)
-    });
+    const p=()=>({x:Math.round((rand()*2-1)*7),y:Math.round((rand()*2-1)*7)});
     pairs.push([p(),p()]);
   }
   return pairs;
 }
 const BRIEF_PAIRS=seededPairs();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function getObjectFitCoverMapping(video){
+  const vw=video.videoWidth,vh=video.videoHeight;
+  const rect=video.getBoundingClientRect();
+  if(!vw||!vh||!rect.width||!rect.height)throw new Error("Camera-afmetingen nog niet beschikbaar.");
 
-function captureGray(video,canvas){
-  const w=video.videoWidth,h=video.videoHeight;
-  if(!w||!h)throw new Error("Nog geen bruikbaar camerabeeld.");
+  const scale=Math.max(rect.width/vw,rect.height/vh);
+  const renderedWidth=vw*scale;
+  const renderedHeight=vh*scale;
+  const offsetX=(rect.width-renderedWidth)/2;
+  const offsetY=(rect.height-renderedHeight)/2;
+
+  return {vw,vh,rect,scale,renderedWidth,renderedHeight,offsetX,offsetY};
+}
+
+export function scanBoxToVideoCrop(video,scanBox){
+  const map=getObjectFitCoverMapping(video);
+  const box=scanBox.getBoundingClientRect();
+
+  const leftInVideoElement=box.left-map.rect.left;
+  const topInVideoElement=box.top-map.rect.top;
+  const rightInVideoElement=box.right-map.rect.left;
+  const bottomInVideoElement=box.bottom-map.rect.top;
+
+  let sx=(leftInVideoElement-map.offsetX)/map.scale;
+  let sy=(topInVideoElement-map.offsetY)/map.scale;
+  let ex=(rightInVideoElement-map.offsetX)/map.scale;
+  let ey=(bottomInVideoElement-map.offsetY)/map.scale;
+
+  sx=clamp(sx,0,map.vw);
+  sy=clamp(sy,0,map.vh);
+  ex=clamp(ex,0,map.vw);
+  ey=clamp(ey,0,map.vh);
+
+  const sw=Math.max(1,ex-sx);
+  const sh=Math.max(1,ey-sy);
+
+  return {sx,sy,sw,sh};
+}
+
+function captureGray(video,scanBox,canvas,debugCanvas){
+  const {sx,sy,sw,sh}=scanBoxToVideoCrop(video,scanBox);
   const ctx=canvas.getContext("2d",{willReadFrequently:true});
   if(!ctx)throw new Error("Canvas-context niet beschikbaar.");
+
   canvas.width=SIZE;canvas.height=SIZE;
-  const cropSize=Math.min(w,h)*0.68;
-  const sx=(w-cropSize)/2,sy=(h-cropSize)/2;
-  ctx.drawImage(video,sx,sy,cropSize,cropSize,0,0,SIZE,SIZE);
+  ctx.drawImage(video,sx,sy,sw,sh,0,0,SIZE,SIZE);
+
+  if(debugCanvas){
+    const dctx=debugCanvas.getContext("2d");
+    if(dctx){
+      debugCanvas.width=192;
+      debugCanvas.height=192;
+      dctx.clearRect(0,0,192,192);
+      dctx.drawImage(video,sx,sy,sw,sh,0,0,192,192);
+    }
+  }
+
   const rgba=ctx.getImageData(0,0,SIZE,SIZE).data;
   const gray=new Float32Array(SIZE*SIZE);
   let sum=0,sumSq=0;
@@ -60,25 +104,24 @@ function cornerCandidates(gray){
       for(let wy=-1;wy<=1;wy++){
         for(let wx=-1;wx<=1;wx++){
           const i=(y+wy)*SIZE+(x+wx);
-          const gx=(gray[i+1]-gray[i-1])*0.5;
-          const gy=(gray[i+SIZE]-gray[i-SIZE])*0.5;
+          const gx=(gray[i+1]-gray[i-1])*.5;
+          const gy=(gray[i+SIZE]-gray[i-SIZE])*.5;
           sxx+=gx*gx;syy+=gy*gy;sxy+=gx*gy;
         }
       }
       const det=sxx*syy-sxy*sxy;
       const trace=sxx+syy;
-      const score=det-0.045*trace*trace;
-      if(score>0.25)candidates.push({x,y,score});
+      const score=det-.045*trace*trace;
+      if(score>.25)candidates.push({x,y,score});
     }
   }
   candidates.sort((a,b)=>b.score-a.score);
   const selected=[];
-  const minDist2=36;
   for(const c of candidates){
     let near=false;
     for(const s of selected){
       const dx=c.x-s.x,dy=c.y-s.y;
-      if(dx*dx+dy*dy<minDist2){near=true;break}
+      if(dx*dx+dy*dy<36){near=true;break}
     }
     if(!near){
       selected.push(c);
@@ -89,17 +132,14 @@ function cornerCandidates(gray){
 }
 
 function briefDescriptor(gray,x,y){
-  const bits=new Array(DESCRIPTOR_BITS);
-  for(let i=0;i<DESCRIPTOR_BITS;i++){
-    const [a,b]=BRIEF_PAIRS[i];
+  return BRIEF_PAIRS.map(([a,b])=>{
     const ax=clamp(x+a.x,0,SIZE-1),ay=clamp(y+a.y,0,SIZE-1);
     const bx=clamp(x+b.x,0,SIZE-1),by=clamp(y+b.y,0,SIZE-1);
-    bits[i]=gray[ay*SIZE+ax]<gray[by*SIZE+bx]?1:0;
-  }
-  return bits;
+    return gray[ay*SIZE+ax]<gray[by*SIZE+bx]?1:0;
+  });
 }
 
-function featureCoverage(features){
+function coverage(features){
   if(!features.length)return 0;
   const cells=new Set();
   for(const f of features){
@@ -110,8 +150,8 @@ function featureCoverage(features){
   return cells.size/16;
 }
 
-export function extractFeatures(video,canvas){
-  const gray=captureGray(video,canvas);
+export function extractFeatures(video,scanBox,canvas,debugCanvas){
+  const gray=captureGray(video,scanBox,canvas,debugCanvas);
   const corners=cornerCandidates(gray);
   const features=corners.map(c=>({
     x:c.x/(SIZE-1),
@@ -119,10 +159,7 @@ export function extractFeatures(video,canvas){
     score:c.score,
     descriptor:briefDescriptor(gray,c.x,c.y)
   }));
-  return {
-    features,
-    coverage:featureCoverage(features)
-  };
+  return {features,coverage:coverage(features)};
 }
 
 function hamming(a,b){
@@ -133,28 +170,24 @@ function hamming(a,b){
 
 function matchFeatures(current,reference){
   const matches=[];
-  for(let ci=0;ci<current.length;ci++){
-    let best={d:Infinity,ri:-1},second=Infinity;
-    for(let ri=0;ri<reference.length;ri++){
-      const d=hamming(current[ci].descriptor,reference[ri].descriptor);
-      if(d<best.d){second=best.d;best={d,ri}}
+  for(const c of current){
+    let bestD=Infinity,bestRef=null,second=Infinity;
+    for(const r of reference){
+      const d=hamming(c.descriptor,r.descriptor);
+      if(d<bestD){second=bestD;bestD=d;bestRef=r}
       else if(d<second)second=d;
     }
-    if(best.ri>=0&&best.d<=MATCH_DISTANCE_MAX&&best.d<second*RATIO_LIMIT){
-      matches.push({
-        current:current[ci],
-        reference:reference[best.ri],
-        distance:best.d
-      });
+    if(bestRef&&bestD<=MATCH_DISTANCE_MAX&&bestD<second*RATIO_LIMIT){
+      matches.push({current:c,reference:bestRef,distance:bestD});
     }
   }
 
   matches.sort((a,b)=>a.distance-b.distance);
-  const usedRef=new Set();
+  const used=new Set();
   return matches.filter(m=>{
-    const key=`${m.reference.x.toFixed(4)}:${m.reference.y.toFixed(4)}`;
-    if(usedRef.has(key))return false;
-    usedRef.add(key);
+    const k=`${m.reference.x.toFixed(4)}:${m.reference.y.toFixed(4)}`;
+    if(used.has(k))return false;
+    used.add(k);
     return true;
   });
 }
@@ -164,79 +197,68 @@ function estimateSimilarity(m1,m2){
   const rdx=r2.x-r1.x,rdy=r2.y-r1.y;
   const cdx=c2.x-c1.x,cdy=c2.y-c1.y;
   const rlen=Math.hypot(rdx,rdy),clen=Math.hypot(cdx,cdy);
-  if(rlen<0.05||clen<0.03)return null;
+  if(rlen<.05||clen<.03)return null;
   const scale=clen/rlen;
-  if(scale<0.45||scale>2.2)return null;
-  const ra=Math.atan2(rdy,rdx),ca=Math.atan2(cdy,cdx);
-  const angle=ca-ra,cos=Math.cos(angle),sin=Math.sin(angle);
-  const tx=c1.x-scale*(cos*r1.x-sin*r1.y);
-  const ty=c1.y-scale*(sin*r1.x+cos*r1.y);
-  return {scale,cos,sin,tx,ty};
+  if(scale<.45||scale>2.2)return null;
+  const angle=Math.atan2(cdy,cdx)-Math.atan2(rdy,rdx);
+  const cos=Math.cos(angle),sin=Math.sin(angle);
+  return {
+    scale,cos,sin,
+    tx:c1.x-scale*(cos*r1.x-sin*r1.y),
+    ty:c1.y-scale*(sin*r1.x+cos*r1.y)
+  };
 }
 
-function transformPoint(p,t){
+function transform(p,t){
   return {
     x:t.tx+t.scale*(t.cos*p.x-t.sin*p.y),
     y:t.ty+t.scale*(t.sin*p.x+t.cos*p.y)
   };
 }
 
-function geometricVerification(matches){
-  if(matches.length<2)return {inliers:0,model:null};
-  let bestInliers=0,bestModel=null;
+function verify(matches){
+  if(matches.length<2)return {inliers:0};
+  let best=0;
   const limit=Math.min(matches.length,28);
-
   for(let i=0;i<limit;i++){
     for(let j=i+1;j<limit;j++){
       const model=estimateSimilarity(matches[i],matches[j]);
       if(!model)continue;
-      let inliers=0;
+      let n=0;
       for(const m of matches){
-        const p=transformPoint(m.reference,model);
-        const e=Math.hypot(p.x-m.current.x,p.y-m.current.y);
-        if(e<=INLIER_ERROR)inliers++;
+        const p=transform(m.reference,model);
+        if(Math.hypot(p.x-m.current.x,p.y-m.current.y)<=INLIER_ERROR)n++;
       }
-      if(inliers>bestInliers){bestInliers=inliers;bestModel=model}
+      if(n>best)best=n;
     }
   }
-  return {inliers:bestInliers,model:bestModel};
+  return {inliers:best};
 }
 
-function confidenceFrom(inliers,goodMatches,liveFeatures){
-  if(inliers>=12&&goodMatches>=14)return "HOOG";
-  if(inliers>=8&&goodMatches>=10)return "MIDDEL";
-  if(inliers>=5&&goodMatches>=7)return "LAAG";
+function confidence(inliers,good){
+  if(inliers>=12&&good>=14)return "HOOG";
+  if(inliers>=8&&good>=10)return "MIDDEL";
+  if(inliers>=5&&good>=7)return "LAAG";
   return "GEEN";
 }
 
-export function evaluateRecognition(liveFeatures,refs){
-  let best={goodMatches:0,inliers:0,confidence:"GEEN",referenceIndex:-1};
-
-  refs.forEach((ref,index)=>{
+export function evaluate(liveFeatures,refs){
+  let best={goodMatches:0,inliers:0,confidence:"GEEN"};
+  for(const ref of refs){
     const matches=matchFeatures(liveFeatures,ref.features);
-    const geo=geometricVerification(matches);
-    const confidence=confidenceFrom(geo.inliers,matches.length,liveFeatures.length);
-
-    if(
-      geo.inliers>best.inliers ||
-      (geo.inliers===best.inliers&&matches.length>best.goodMatches)
-    ){
-      best={
-        goodMatches:matches.length,
-        inliers:geo.inliers,
-        confidence,
-        referenceIndex:index
-      };
+    const geo=verify(matches);
+    const c=confidence(geo.inliers,matches.length);
+    if(geo.inliers>best.inliers||(geo.inliers===best.inliers&&matches.length>best.goodMatches)){
+      best={goodMatches:matches.length,inliers:geo.inliers,confidence:c};
     }
-  });
-
+  }
   return best;
 }
 
 export function getReferences(){
   try{
-    const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
-    return Array.isArray(parsed)?parsed.slice(0,MAX_REFERENCES):[];
+    const p=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
+    return Array.isArray(p)?p.slice(0,MAX_REFERENCES):[];
   }catch{return[]}
 }
 
@@ -254,9 +276,9 @@ export function saveReference(profile){
 export function clearReferences(){localStorage.removeItem(STORAGE_KEY)}
 export function getMaxReferences(){return MAX_REFERENCES}
 
-export function qualityLabel(featureCount,coverage){
-  if(featureCount>=50&&coverage>=0.45)return "GOED";
-  if(featureCount>=28&&coverage>=0.28)return "MATIG";
+export function qualityLabel(featureCount,coverageValue){
+  if(featureCount>=50&&coverageValue>=.45)return "GOED";
+  if(featureCount>=28&&coverageValue>=.28)return "MATIG";
   return "MOEILIJK";
 }
 
@@ -267,15 +289,15 @@ export function stopRecognitionLoop(){
   }
 }
 
-export function startRecognitionLoop({video,canvas,onResult,intervalMs=750}){
+export function startRecognitionLoop({video,scanBox,canvas,debugCanvas,onResult,intervalMs=750}){
   stopRecognitionLoop();
   const refs=getReferences();
   if(!refs.length)throw new Error("Registreer eerst minstens één aanzicht.");
 
   const run=()=>{
     try{
-      const live=extractFeatures(video,canvas);
-      const result=evaluateRecognition(live.features,refs);
+      const live=extractFeatures(video,scanBox,canvas,debugCanvas);
+      const result=evaluate(live.features,refs);
       onResult({
         liveFeatureCount:live.features.length,
         goodMatches:result.goodMatches,
