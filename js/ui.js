@@ -1,12 +1,11 @@
 export function getUI(){
   const ids=[
-    "homeView","cameraView","homeStatus","btnEnterRegister","btnEnterRecognize","btnBack",
-    "cameraPreview","analysisCanvas","debugCanvas","cameraStatus","recognitionFeedback","scanBox",
-    "modeTitle","modeSubtitle","registerControls","recognizeControls","btnCaptureReference",
-    "btnToggleRecognition","btnTogglePreview","analysisPreviewPanel","referenceCountCamera",
-    "referenceCountHome","versionValue","baselineValue","cameraStateValue","btnSelfTest",
-    "btnClearReferencesHome","featureCountValue","coverageValue","qualityValue",
-    "liveFeatureCountValue","goodMatchesValue","inliersValue","confidenceValue"
+    "homeView","cameraView","homeStatus","btnStartRegistration","btnShowSaved","savedCard",
+    "savedImage","savedSizeValue","savedDateValue","btnDeleteSaved","versionValue","baselineValue",
+    "cameraStateValue","registrationStateValue","btnSelfTest","cameraPreview","frozenCanvas",
+    "btnBack","modeTitle","modeSubtitle","selectionLayer","selectionBox","cameraFeedback",
+    "captureControls","selectControls","confirmControls","btnTakePhoto","btnResetSelection",
+    "btnPreviewSelection","cropPreviewCanvas","btnEditSelection","btnConfirmSelection"
   ];
   const ui={};
   for(const id of ids){
@@ -16,7 +15,7 @@ export function getUI(){
   }
   return ui;
 }
-export function setHomeStatus(el,message,kind=""){
+export function setStatus(el,message,kind=""){
   el.textContent=message;
   el.className=`status ${kind}`.trim();
 }

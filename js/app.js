@@ -1,223 +1,260 @@
-import{createGiftState}from"./gift-state.js";
 import{cameraModule,startCamera,stopCamera}from"./camera.js";
-import{
-  recognitionModule,extractFeatures,saveReference,getReferences,clearReferences,
-  getMaxReferences,qualityLabel,startRecognitionLoop,stopRecognitionLoop
-}from"./recognition.js";
-import{xrAdapterModule}from"./xr-adapter.js";
-import{placementModule}from"./placement.js";
-import{experienceModule}from"./experience.js";
-import{rendererModule}from"./renderer.js";
-import{assetModule}from"./assets.js";
-import{getBasicCapabilities}from"./capabilities.js";
-import{getUI,setHomeStatus}from"./ui.js";
+import{registrationModule,saveRegistration,loadRegistration,clearRegistration,freezeVisibleFrame,cropSelection}from"./registration.js";
+import{getUI,setStatus}from"./ui.js";
+import{getCapabilities}from"./capabilities.js";
 
-const VERSION="0.4.1";
+const VERSION="0.5.0";
 const BASELINE="0.2.0";
-const modules=[cameraModule,recognitionModule,xrAdapterModule,placementModule,experienceModule,rendererModule,assetModule];
+const modules=[cameraModule,registrationModule];
 
-let ui,state,listenersBound=false,previewVisible=false;
+let ui;
+let mode="home";
+let drag=null;
+let selection=null;
+let currentCrop=null;
+let listenersBound=false;
 
-function updateReferenceUI(){
-  const count=getReferences().length;
-  const text=`${count} / ${getMaxReferences()}`;
-  ui.referenceCountHome.textContent=text;
-  ui.referenceCountCamera.textContent=text;
-  ui.btnCaptureReference.disabled=count>=getMaxReferences();
-  ui.btnClearReferencesHome.disabled=count===0;
+function updateSavedState(){
+  const saved=loadRegistration();
+  ui.registrationStateValue.textContent=saved?"1 aanzicht opgeslagen":"geen";
+  ui.btnShowSaved.disabled=!saved;
+  if(saved){
+    ui.savedImage.src=saved.dataUrl;
+    ui.savedSizeValue.textContent=`${saved.width} × ${saved.height}px`;
+    ui.savedDateValue.textContent=new Date(saved.savedAt).toLocaleString();
+  }
 }
 
-function resetDiagnostics(){
-  ui.featureCountValue.textContent="—";
-  ui.coverageValue.textContent="—";
-  ui.qualityValue.textContent="—";
-  ui.liveFeatureCountValue.textContent="—";
-  ui.goodMatchesValue.textContent="—";
-  ui.inliersValue.textContent="—";
-  ui.confidenceValue.textContent="—";
-  ui.scanBox.classList.remove("match");
+function showSaved(){
+  const saved=loadRegistration();
+  if(!saved)return;
+  ui.savedCard.classList.toggle("hidden");
 }
 
-function stopRecognition(){
-  stopRecognitionLoop();
-  state.recognitionStatus="idle";
-  ui.btnToggleRecognition.textContent="Start herkennen";
-  ui.recognitionFeedback.textContent="";
-  ui.scanBox.classList.remove("match");
-}
-
-function setMode(mode){
-  state.mode=mode;
-  const register=mode==="register";
-  ui.modeTitle.textContent=register?"Object registreren":"Object herkennen";
-  ui.modeSubtitle.textContent=register
-    ?"Plaats het object groot in het kader"
-    :"Beweeg rond het geregistreerde object";
-  ui.registerControls.classList.toggle("hidden",!register);
-  ui.recognizeControls.classList.toggle("hidden",register);
-  stopRecognition();
-  resetDiagnostics();
-}
-
-async function enterCamera(mode){
+async function enterRegistration(){
   try{
-    if(mode==="recognize"&&getReferences().length===0){
-      setHomeStatus(ui.homeStatus,"Registreer eerst minstens één aanzicht.","warn");
-      return;
-    }
-
-    setMode(mode);
+    mode="camera";
+    selection=null;
+    currentCrop=null;
+    ui.cameraView.classList.remove("frozen");
     ui.homeView.hidden=true;
     ui.cameraView.classList.add("active");
     ui.cameraView.setAttribute("aria-hidden","false");
-    ui.cameraStatus.textContent="Camera starten…";
-
+    ui.captureControls.classList.remove("hidden");
+    ui.selectControls.classList.add("hidden");
+    ui.confirmControls.classList.add("hidden");
+    ui.selectionLayer.classList.add("hidden");
+    ui.selectionBox.classList.add("hidden");
+    ui.modeTitle.textContent="Neem een foto";
+    ui.modeSubtitle.textContent="Zorg dat het cadeau duidelijk zichtbaar is";
+    ui.cameraFeedback.textContent="Camera starten…";
     await startCamera(ui.cameraPreview);
-
-    state.cameraStatus="running";
     ui.cameraStateValue.textContent="actief";
-    ui.cameraStatus.textContent="Camera actief";
+    ui.cameraFeedback.textContent="";
   }catch(error){
     console.error(error);
-    await leaveCamera();
-    setHomeStatus(
-      ui.homeStatus,
-      error?.name==="NotAllowedError"?"Cameratoegang geweigerd.":`Camera kon niet starten: ${error.message}`,
-      "error"
-    );
+    await leaveRegistration();
+    setStatus(ui.homeStatus,`Camera kon niet starten: ${error.message}`,"error");
   }
 }
 
-async function leaveCamera(){
-  stopRecognition();
+async function leaveRegistration(){
   await stopCamera(ui.cameraPreview);
-  state.cameraStatus="stopped";
+  mode="home";
+  selection=null;
+  drag=null;
+  currentCrop=null;
   ui.cameraStateValue.textContent="gestopt";
-  ui.cameraView.classList.remove("active");
+  ui.cameraView.classList.remove("active","frozen");
   ui.cameraView.setAttribute("aria-hidden","true");
   ui.homeView.hidden=false;
-  state.mode="home";
-  updateReferenceUI();
+  updateSavedState();
 }
 
-function captureReference(){
+function takePhoto(){
   try{
-    const profile=extractFeatures(ui.cameraPreview,ui.scanBox,ui.analysisCanvas,previewVisible?ui.debugCanvas:null);
-    const count=profile.features.length;
-    const coveragePct=Math.round(profile.coverage*100);
-    const quality=qualityLabel(count,profile.coverage);
-
-    ui.featureCountValue.textContent=String(count);
-    ui.coverageValue.textContent=`${coveragePct}%`;
-    ui.qualityValue.textContent=quality;
-
-    const savedCount=saveReference(profile);
-    updateReferenceUI();
-
-    ui.recognitionFeedback.textContent=savedCount<getMaxReferences()
-      ?`Aanzicht ${savedCount} opgeslagen — draai het object`
-      :"Registratie compleet";
+    freezeVisibleFrame(ui.cameraPreview,ui.frozenCanvas);
+    ui.cameraView.classList.add("frozen");
+    mode="select";
+    ui.captureControls.classList.add("hidden");
+    ui.selectControls.classList.remove("hidden");
+    ui.selectionLayer.classList.remove("hidden");
+    ui.selectionBox.classList.add("hidden");
+    ui.modeTitle.textContent="Duid je cadeau aan";
+    ui.modeSubtitle.textContent="Sleep een kader rond het object";
+    ui.cameraFeedback.textContent="Trek met je vinger een rechthoek rond het cadeau.";
   }catch(error){
-    console.error(error);
-    ui.recognitionFeedback.textContent=error.message;
+    ui.cameraFeedback.textContent=error.message;
   }
 }
 
-function toggleRecognition(){
-  if(state.recognitionStatus==="running"){
-    stopRecognition();
-    return;
+function resetSelection(){
+  selection=null;
+  ui.selectionBox.classList.add("hidden");
+  ui.cameraFeedback.textContent="Maak een nieuwe selectie.";
+}
+
+function rectFromPoints(x1,y1,x2,y2){
+  return {
+    left:Math.min(x1,x2),
+    top:Math.min(y1,y2),
+    width:Math.abs(x2-x1),
+    height:Math.abs(y2-y1)
+  };
+}
+
+function applySelection(){
+  if(!selection)return;
+  const layer=ui.selectionLayer.getBoundingClientRect();
+  ui.selectionBox.style.left=`${selection.left-layer.left}px`;
+  ui.selectionBox.style.top=`${selection.top-layer.top}px`;
+  ui.selectionBox.style.width=`${selection.width}px`;
+  ui.selectionBox.style.height=`${selection.height}px`;
+  ui.selectionBox.classList.remove("hidden");
+}
+
+function pointerDown(e){
+  if(mode!=="select")return;
+  const handle=e.target?.dataset?.handle;
+  const layer=ui.selectionLayer.getBoundingClientRect();
+
+  if(handle&&selection){
+    drag={type:"resize",handle,startX:e.clientX,startY:e.clientY,initial:{...selection}};
+  }else{
+    drag={type:"new",startX:e.clientX,startY:e.clientY};
+    selection={left:e.clientX,top:e.clientY,width:0,height:0};
+  }
+  ui.selectionLayer.setPointerCapture?.(e.pointerId);
+  e.preventDefault();
+}
+
+function pointerMove(e){
+  if(!drag||mode!=="select")return;
+
+  if(drag.type==="new"){
+    selection=rectFromPoints(drag.startX,drag.startY,e.clientX,e.clientY);
+  }else{
+    const i=drag.initial;
+    let left=i.left,top=i.top,right=i.left+i.width,bottom=i.top+i.height;
+    if(drag.handle.includes("n"))top=e.clientY;
+    if(drag.handle.includes("s"))bottom=e.clientY;
+    if(drag.handle.includes("w"))left=e.clientX;
+    if(drag.handle.includes("e"))right=e.clientX;
+    selection=rectFromPoints(left,top,right,bottom);
   }
 
+  const layer=ui.selectionLayer.getBoundingClientRect();
+  selection.left=Math.max(layer.left,Math.min(selection.left,layer.right-20));
+  selection.top=Math.max(layer.top,Math.min(selection.top,layer.bottom-20));
+  selection.width=Math.min(selection.width,layer.right-selection.left);
+  selection.height=Math.min(selection.height,layer.bottom-selection.top);
+  applySelection();
+  e.preventDefault();
+}
+
+function pointerUp(e){
+  if(!drag)return;
+  drag=null;
+  if(selection&&selection.width>=40&&selection.height>=40){
+    ui.cameraFeedback.textContent="Selectie gemaakt. Pas eventueel de hoekpunten aan.";
+  }else{
+    resetSelection();
+    ui.cameraFeedback.textContent="Selectie te klein. Probeer opnieuw.";
+  }
+  try{ui.selectionLayer.releasePointerCapture?.(e.pointerId)}catch{}
+}
+
+function previewSelection(){
   try{
-    state.recognitionStatus="running";
-    ui.btnToggleRecognition.textContent="Stop herkennen";
-    ui.recognitionFeedback.textContent="Kenmerken zoeken…";
+    if(!selection)throw new Error("Duid eerst het cadeau aan.");
+    const displayRect=ui.frozenCanvas.getBoundingClientRect();
+    const selectionRect=ui.selectionBox.getBoundingClientRect();
+    currentCrop=cropSelection(ui.frozenCanvas,selectionRect,displayRect,ui.cropPreviewCanvas);
 
-    startRecognitionLoop({
-      video:ui.cameraPreview,
-      scanBox:ui.scanBox,
-      canvas:ui.analysisCanvas,
-      debugCanvas:previewVisible?ui.debugCanvas:null,
-      onResult:({liveFeatureCount,goodMatches,inliers,confidence,matched,error})=>{
-        if(error){
-          console.error(error);
-          ui.recognitionFeedback.textContent=`Fout: ${error.message}`;
-          return;
-        }
+    mode="confirm";
+    ui.selectionLayer.classList.add("hidden");
+    ui.selectControls.classList.add("hidden");
+    ui.confirmControls.classList.remove("hidden");
+    ui.modeTitle.textContent="Controleer selectie";
+    ui.modeSubtitle.textContent="Dit is wat Gift AR zal onthouden";
+    ui.cameraFeedback.textContent="";
+  }catch(error){
+    ui.cameraFeedback.textContent=error.message;
+  }
+}
 
-        ui.liveFeatureCountValue.textContent=String(liveFeatureCount);
-        ui.goodMatchesValue.textContent=String(goodMatches);
-        ui.inliersValue.textContent=String(inliers);
-        ui.confidenceValue.textContent=confidence;
+function editSelection(){
+  mode="select";
+  ui.selectionLayer.classList.remove("hidden");
+  ui.selectControls.classList.remove("hidden");
+  ui.confirmControls.classList.add("hidden");
+  ui.modeTitle.textContent="Duid je cadeau aan";
+  ui.modeSubtitle.textContent="Pas de selectie aan";
+}
 
-        if(matched){
-          ui.recognitionFeedback.textContent="CADEAU HERKEND ✓";
-          ui.scanBox.classList.add("match");
-        }else{
-          ui.recognitionFeedback.textContent="Zoeken…";
-          ui.scanBox.classList.remove("match");
-        }
-      }
+async function confirmSelection(){
+  try{
+    if(!currentCrop)throw new Error("Geen geldige selectie.");
+    saveRegistration({
+      version:1,
+      dataUrl:currentCrop.dataUrl,
+      width:currentCrop.width,
+      height:currentCrop.height,
+      sourceRect:currentCrop.source,
+      savedAt:new Date().toISOString()
     });
+    setStatus(ui.homeStatus,"Aanzicht succesvol opgeslagen.","ok");
+    await leaveRegistration();
+    ui.savedCard.classList.remove("hidden");
+    updateSavedState();
   }catch(error){
-    console.error(error);
-    stopRecognition();
-    ui.recognitionFeedback.textContent=error.message;
+    ui.cameraFeedback.textContent=error.message;
   }
-}
-
-function togglePreview(){
-  previewVisible=!previewVisible;
-  ui.analysisPreviewPanel.classList.toggle("hidden",!previewVisible);
-  ui.btnTogglePreview.textContent=previewVisible?"Verberg analysebeeld":"Toon analysebeeld";
-
-  if(previewVisible && state.mode==="register"){
-    try{
-      extractFeatures(ui.cameraPreview,ui.scanBox,ui.analysisCanvas,ui.debugCanvas);
-    }catch{}
-  }
-}
-
-function clearRegistration(){
-  stopRecognition();
-  clearReferences();
-  updateReferenceUI();
-  resetDiagnostics();
-  setHomeStatus(ui.homeStatus,"Registratie gewist.","ok");
 }
 
 function runSelfTest(){
   try{
-    const caps=getBasicCapabilities();
+    const caps=getCapabilities();
     if(!modules.every(m=>m.ready))throw new Error("Niet alle modules gereed.");
-    setHomeStatus(
+    setStatus(
       ui.homeStatus,
-      `Basistest geslaagd. Secure context: ${caps.secureContext?"ja":"nee"}. getUserMedia: ${caps.getUserMediaPresent?"ja":"nee"}. LocalStorage: ${caps.localStoragePresent?"ja":"nee"}.`,
+      `Basistest geslaagd. Secure context: ${caps.secureContext?"ja":"nee"}. Camera API: ${caps.camera?"ja":"nee"}. LocalStorage: ${caps.localStorage?"ja":"nee"}.`,
       "ok"
     );
   }catch(error){
-    setHomeStatus(ui.homeStatus,`Basistest mislukt: ${error.message}`,"error");
+    setStatus(ui.homeStatus,`Basistest mislukt: ${error.message}`,"error");
   }
 }
 
 function bindListeners(){
   if(listenersBound)return;
-  ui.btnEnterRegister.addEventListener("click",()=>enterCamera("register"));
-  ui.btnEnterRecognize.addEventListener("click",()=>enterCamera("recognize"));
-  ui.btnBack.addEventListener("click",leaveCamera);
-  ui.btnCaptureReference.addEventListener("click",captureReference);
-  ui.btnToggleRecognition.addEventListener("click",toggleRecognition);
-  ui.btnTogglePreview.addEventListener("click",togglePreview);
-  ui.btnClearReferencesHome.addEventListener("click",clearRegistration);
+  ui.btnStartRegistration.addEventListener("click",enterRegistration);
+  ui.btnShowSaved.addEventListener("click",showSaved);
+  ui.btnDeleteSaved.addEventListener("click",()=>{
+    clearRegistration();
+    ui.savedCard.classList.add("hidden");
+    updateSavedState();
+    setStatus(ui.homeStatus,"Opgeslagen aanzicht verwijderd.","ok");
+  });
   ui.btnSelfTest.addEventListener("click",runSelfTest);
+  ui.btnBack.addEventListener("click",leaveRegistration);
+  ui.btnTakePhoto.addEventListener("click",takePhoto);
+  ui.btnResetSelection.addEventListener("click",resetSelection);
+  ui.btnPreviewSelection.addEventListener("click",previewSelection);
+  ui.btnEditSelection.addEventListener("click",editSelection);
+  ui.btnConfirmSelection.addEventListener("click",confirmSelection);
+
+  ui.selectionLayer.addEventListener("pointerdown",pointerDown);
+  ui.selectionLayer.addEventListener("pointermove",pointerMove);
+  ui.selectionLayer.addEventListener("pointerup",pointerUp);
+  ui.selectionLayer.addEventListener("pointercancel",pointerUp);
 
   document.addEventListener("visibilitychange",()=>{
-    if(document.hidden&&state.mode!=="home")leaveCamera();
+    if(document.hidden&&mode!=="home")leaveRegistration();
   });
 
   window.addEventListener("pagehide",()=>{
-    if(state?.mode!=="home")leaveCamera();
+    if(mode!=="home")leaveRegistration();
   });
 
   listenersBound=true;
@@ -225,16 +262,11 @@ function bindListeners(){
 
 function init(){
   ui=getUI();
-  state=createGiftState();
-
   ui.versionValue.textContent=VERSION;
   ui.baselineValue.textContent=BASELINE;
-
   bindListeners();
-  updateReferenceUI();
-  resetDiagnostics();
-
-  setHomeStatus(ui.homeStatus,`Gift AR v${VERSION} is correct gestart.`,"ok");
+  updateSavedState();
+  setStatus(ui.homeStatus,`Gift AR v${VERSION} is correct gestart.`,"ok");
 }
 
 window.addEventListener("DOMContentLoaded",init,{once:true});
