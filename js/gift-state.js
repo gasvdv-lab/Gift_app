@@ -1,1 +1,1 @@
-export function createGiftState(){return{mode:"home",cameraStatus:"stopped",recognitionStatus:"idle",capturing:false}}
+export function createGiftState(){return{mode:"home",cameraStatus:"stopped",recognitionStatus:"idle"}}
