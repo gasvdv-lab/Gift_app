@@ -1,86 +1,71 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
-  <title>Gift AR v0.3.0</title>
-  <link rel="stylesheet" href="./css/app.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#000000">
+<title>Gift AR v0.3.1</title>
+<link rel="stylesheet" href="./css/app.css">
 </head>
 <body>
-  <main class="app-shell">
-    <section class="card" aria-labelledby="app-title">
-      <div class="badge">Gift AR</div>
-      <h1 id="app-title">AR-cadeauplatform</h1>
-      <p class="lead">Recognition PoC v0.3.0</p>
-
-      <div id="status" class="status" role="status" aria-live="polite">
-        App wordt gestart…
+<main id="appRoot">
+<section id="homeView" class="home-view">
+  <div class="home-card">
+    <div class="badge">Gift AR</div>
+    <h1>Recognition Test</h1>
+    <p>v0.3.1 — fullscreen camera UI</p>
+    <div id="homeStatus" class="status" role="status" aria-live="polite">App wordt gestart…</div>
+    <div class="home-actions">
+      <button id="btnEnterRegister">Object registreren</button>
+      <button id="btnEnterRecognize" class="secondary">Object herkennen</button>
+    </div>
+    <details>
+      <summary>Debug / versie</summary>
+      <dl>
+        <div><dt>Versie</dt><dd id="versionValue">—</dd></div>
+        <div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
+        <div><dt>Referenties</dt><dd id="referenceCountHome">0 / 3</dd></div>
+        <div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
+      </dl>
+      <div class="debug-actions">
+        <button id="btnSelfTest" class="secondary">Basistest</button>
+        <button id="btnClearReferencesHome" class="danger">Registratie wissen</button>
       </div>
+    </details>
+  </div>
+</section>
 
-      <section class="camera-panel" aria-label="Camera en herkenning">
-        <div class="camera-frame">
-          <video id="cameraPreview" playsinline muted></video>
-          <div id="cameraPlaceholder" class="camera-placeholder">
-            Camera nog niet gestart
-          </div>
-          <div class="scan-guide" aria-hidden="true">
-            <div class="scan-box"></div>
-          </div>
-        </div>
-
-        <div class="actions camera-actions">
-          <button id="btnStartCamera" type="button">Start camera</button>
-          <button id="btnStopCamera" type="button" class="secondary">Stop camera</button>
-          <button id="btnRestartCamera" type="button" class="secondary">Herstart camera</button>
-        </div>
-      </section>
-
-      <section class="recognition-panel" aria-labelledby="recognition-title">
-        <h2 id="recognition-title">Objectherkenning — proof of concept</h2>
-        <p class="hint">
-          Plaats hetzelfde object telkens binnen het kader. Registreer drie verschillende aanzichten.
-        </p>
-
-        <div class="progress-row">
-          <span>Referenties:</span>
-          <strong id="referenceCountValue">0 / 3</strong>
-        </div>
-
-        <div class="actions recognition-actions">
-          <button id="btnCaptureReference" type="button">Registreer aanzicht</button>
-          <button id="btnStartRecognition" type="button" class="secondary">Start herkennen</button>
-          <button id="btnStopRecognition" type="button" class="secondary">Stop herkennen</button>
-          <button id="btnClearReferences" type="button" class="danger">Wis registratie</button>
-        </div>
-
-        <div class="recognition-result">
-          <div><span>Status</span><strong id="recognitionStateValue">inactief</strong></div>
-          <div><span>Beste overeenkomst</span><strong id="similarityValue">—</strong></div>
-          <div><span>Drempel</span><strong id="thresholdValue">86%</strong></div>
-        </div>
-      </section>
-
-      <div class="actions utility-actions">
-        <button id="btnSelfTest" type="button" class="secondary">Voer basistest uit</button>
-        <button id="btnReset" type="button" class="secondary">Reset status</button>
+<section id="cameraView" class="camera-view" aria-hidden="true">
+  <video id="cameraPreview" playsinline muted></video>
+  <canvas id="analysisCanvas" width="64" height="64" hidden></canvas>
+  <div class="camera-overlay">
+    <header class="topbar">
+      <button id="btnBack" class="icon-btn" aria-label="Terug">←</button>
+      <div class="mode-title">
+        <strong id="modeTitle">Registreren</strong>
+        <span id="modeSubtitle">Plaats het object in het kader</span>
       </div>
-
-      <details>
-        <summary>Versie-informatie</summary>
-        <dl>
-          <div><dt>Versie</dt><dd id="versionValue">—</dd></div>
-          <div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
-          <div><dt>Platform</dt><dd id="platformValue">—</dd></div>
-          <div><dt>Modules</dt><dd id="moduleValue">—</dd></div>
-          <div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
-        </dl>
-      </details>
-
-      <canvas id="analysisCanvas" width="64" height="64" hidden></canvas>
-    </section>
-  </main>
-
-  <script type="module" src="./js/app.js"></script>
+      <span></span>
+    </header>
+    <div class="scan-area"><div id="scanBox" class="scan-box"></div></div>
+    <div class="feedback">
+      <div id="cameraStatus">Camera starten…</div>
+      <div id="recognitionFeedback" class="recognition-feedback"></div>
+    </div>
+    <footer class="bottom-panel">
+      <div id="registerControls" class="mode-controls">
+        <div class="counter">Aanzichten <strong id="referenceCountCamera">0 / 3</strong></div>
+        <button id="btnCaptureReference" class="primary-action">Registreer aanzicht</button>
+      </div>
+      <div id="recognizeControls" class="mode-controls hidden">
+        <div class="score-line"><span>Overeenkomst</span><strong id="similarityValue">—</strong></div>
+        <div class="score-line"><span>Drempel</span><strong id="thresholdValue">86%</strong></div>
+        <button id="btnToggleRecognition" class="primary-action">Start herkennen</button>
+      </div>
+    </footer>
+  </div>
+</section>
+</main>
+<script type="module" src="./js/app.js"></script>
 </body>
 </html>
