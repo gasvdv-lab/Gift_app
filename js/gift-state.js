@@ -1,1 +1,8 @@
-export function createGiftState(){return{activeGiftId:null,status:"idle",cameraStatus:"stopped"};}
+export function createGiftState() {
+  return {
+    activeGiftId: null,
+    status: "idle",
+    cameraStatus: "stopped",
+    recognitionStatus: "idle"
+  };
+}
