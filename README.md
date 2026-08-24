@@ -1,4 +1,4 @@
-# Gift AR — v0.3.1
+# Gift AR — v0.3.2
 
 ## Vaste app-link
 https://gasvdv-lab.github.io/Gift_app/
@@ -10,50 +10,84 @@ CANDIDATE
 v0.2.0 — Camera Core, bevestigd werkend op Android/Chrome.
 
 ## Doel
-v0.3.1 corrigeert de mobiele UI-fout uit v0.3.0. Het herkenningsalgoritme is bewust niet gewijzigd.
+v0.3.2 onderzoekt lichtrobustheid van de Recognition Engine.
 
-## Gewijzigd
-- Fullscreen camera tijdens registreren en herkennen
-- Geen scroll in camera-modus
-- Bedieningsknoppen als vaste overlay
-- Registreren en herkennen als aparte modi
-- Score en herkenningsstatus permanent zichtbaar
-- Terugknop permanent zichtbaar
-- Debug-informatie alleen op startscherm
-- Camera en recognition worden bij verlaten correct gestopt
+Aanleiding: hetzelfde geregistreerde object zakte bij veranderend avondlicht van ongeveer 88% naar 63–66%. De UI-correctie uit v0.3.1 blijft behouden.
 
-## Herkenning
-Zelfde proof-of-concept als v0.3.0:
-- maximaal 3 referentie-aanzichten
-- lokale descriptors
-- LocalStorage
-- drempel 86%
-- geen externe dependencies
+## Wat verandert
+- Geen wijziging aan Camera Core.
+- Geen wijziging aan fullscreen recognition-UI.
+- Nieuwe descriptor die veel minder op absolute helderheid steunt.
+- Sterker genormaliseerde lokale structuur.
+- Edge/randdescriptor krijgt het grootste gewicht.
+- Kleurinformatie is teruggebracht tot slechts 5%.
+- Eén `Registreer aanzicht` verzamelt nu 7 frames over ongeveer 0,8 seconde.
+- Die frames worden gemiddeld tot één stabieler referentieprofiel.
+- Nieuwe, voorlopige herkenningsdrempel: 74%.
 
-## Testvolgorde Android
+## Belangrijk
+De percentages van v0.3.2 zijn NIET rechtstreeks vergelijkbaar met v0.3.1.
+Het algoritme en dus de schaal van de scores is gewijzigd.
+
+We beoordelen vooral de scheiding tussen:
+- juist object;
+- verkeerd object;
+- andere achtergrond;
+- ander licht.
+
+Een lager absoluut percentage kan beter zijn als verkeerde objecten nog veel lager scoren.
+
+## Opslag
+v0.3.2 gebruikt een nieuwe LocalStorage-sleutel.
+Registraties uit v0.3.0/v0.3.1 worden bewust niet hergebruikt omdat de descriptor incompatibel is.
+
+## Praktijktest
+
+### A — regressie
 1. Open https://gasvdv-lab.github.io/Gift_app/
-2. Controleer versie 0.3.1 en baseline 0.2.0.
+2. Controleer versie 0.3.2.
 3. Voer Basistest uit.
-4. Open Object registreren.
-5. Controleer dat de camera fullscreen opent en dat scrollen niet nodig is.
-6. Controleer dat scanvak, teller, registreerknop en terugknop tegelijk zichtbaar zijn.
-7. Registreer 3 aanzichten.
-8. Ga terug.
-9. Open Object herkennen.
-10. Controleer dat camera, scanvak, score, drempel en knop tegelijk zichtbaar zijn.
-11. Start herkennen en test juiste object, verkeerd object en indien mogelijk een andere steen.
-12. Noteer hoogste/typische score voor juist object en hoogste score voor verkeerd object.
-13. Zet Chrome tijdens camera/herkenning naar de achtergrond en keer terug.
-14. Controleer dat de camera correct werd gestopt en opnieuw kan worden gestart.
-15. Herlaad de pagina en controleer dat de 3 referenties bewaard zijn.
+4. Open/sluit camera minstens 5 keer.
+5. Controleer fullscreen UI en terugknop.
 
-## Succescriteria
-- Geen scroll in camera-modus.
-- Camerabeeld blijft continu zichtbaar.
-- Terug werkt betrouwbaar.
-- v0.2.0 camera-lifecycle blijft intact.
-- Registratie blijft na herladen bewaard.
-- Herkenningsscores zijn praktisch testbaar.
+### B — nieuwe registratie
+6. Kies Object registreren.
+7. Plaats het object zo groot mogelijk binnen het kader.
+8. Tik Registreer aanzicht.
+9. Houd object ongeveer 1 seconde stil terwijl 7 samples worden verzameld.
+10. Draai ongeveer 20–40 graden.
+11. Registreer aanzicht 2.
+12. Draai opnieuw.
+13. Registreer aanzicht 3.
+
+### C —zelfde licht
+14. Open Object herkennen.
+15. Test het juiste object.
+16. Noteer typische en hoogste score.
+17. Test minstens drie verkeerde objecten.
+18. Noteer de hoogste foute score.
+
+### D — ander licht
+19. Verander de verlichting duidelijk, bijvoorbeeld lamp aan/uit of andere kamer.
+20. Test opnieuw het juiste object.
+21. Noteer typische en hoogste score.
+22. Test opnieuw een verkeerd object.
+
+### E — achtergrond
+23. Plaats het juiste object op een andere ondergrond/achtergrond.
+24. Test opnieuw.
+25. Test de oorspronkelijke achtergrond zonder het object.
+
+## Wat terugkoppelen
+- juiste object, zelfde licht: typische/hoogste score;
+- juiste object, ander licht: typische/hoogste score;
+- verkeerd object: hoogste score;
+- originele achtergrond zonder object: hoogste score;
+- of er valse `CADEAU HERKEND` meldingen waren.
+
+## Succescriterium
+v0.3.2 is geslaagd als veranderend licht de score minder sterk beïnvloedt én het juiste object duidelijk beter blijft scoren dan verkeerde objecten.
 
 ## Volgende stap
-Na jouw test beoordelen we eerst de recognition-resultaten. Pas daarna bepalen we v0.3.2 of v0.4.0.
+Als lichtrobustheid voldoende is: v0.3.3 — Background & Viewpoint Robustness.
+Als de scores onvoldoende scheiden, vervangen we de Recognition Engine in plaats van verder kleine patches te stapelen.

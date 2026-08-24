@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <meta name="theme-color" content="#000000">
-<title>Gift AR v0.3.1</title>
+<title>Gift AR v0.3.2</title>
 <link rel="stylesheet" href="./css/app.css">
 </head>
 <body>
@@ -13,12 +13,18 @@
   <div class="home-card">
     <div class="badge">Gift AR</div>
     <h1>Recognition Test</h1>
-    <p>v0.3.1 — fullscreen camera UI</p>
+    <p>v0.3.2 — Lighting Robustness</p>
     <div id="homeStatus" class="status" role="status" aria-live="polite">App wordt gestart…</div>
+
     <div class="home-actions">
       <button id="btnEnterRegister">Object registreren</button>
       <button id="btnEnterRecognize" class="secondary">Object herkennen</button>
     </div>
+
+    <div class="note">
+      <strong>Nieuw:</strong> elk aanzicht wordt nu gedurende ±1 seconde uit meerdere frames opgebouwd en vooral op structuur/randen vergeleken.
+    </div>
+
     <details>
       <summary>Debug / versie</summary>
       <dl>
@@ -26,6 +32,7 @@
         <div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
         <div><dt>Referenties</dt><dd id="referenceCountHome">0 / 3</dd></div>
         <div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
+        <div><dt>Drempel</dt><dd id="thresholdHome">—</dd></div>
       </dl>
       <div class="debug-actions">
         <button id="btnSelfTest" class="secondary">Basistest</button>
@@ -38,6 +45,7 @@
 <section id="cameraView" class="camera-view" aria-hidden="true">
   <video id="cameraPreview" playsinline muted></video>
   <canvas id="analysisCanvas" width="64" height="64" hidden></canvas>
+
   <div class="camera-overlay">
     <header class="topbar">
       <button id="btnBack" class="icon-btn" aria-label="Terug">←</button>
@@ -47,19 +55,26 @@
       </div>
       <span></span>
     </header>
-    <div class="scan-area"><div id="scanBox" class="scan-box"></div></div>
+
+    <div class="scan-area">
+      <div id="scanBox" class="scan-box"></div>
+    </div>
+
     <div class="feedback">
       <div id="cameraStatus">Camera starten…</div>
       <div id="recognitionFeedback" class="recognition-feedback"></div>
     </div>
+
     <footer class="bottom-panel">
       <div id="registerControls" class="mode-controls">
         <div class="counter">Aanzichten <strong id="referenceCountCamera">0 / 3</strong></div>
+        <div id="captureProgress" class="capture-progress"></div>
         <button id="btnCaptureReference" class="primary-action">Registreer aanzicht</button>
       </div>
+
       <div id="recognizeControls" class="mode-controls hidden">
         <div class="score-line"><span>Overeenkomst</span><strong id="similarityValue">—</strong></div>
-        <div class="score-line"><span>Drempel</span><strong id="thresholdValue">86%</strong></div>
+        <div class="score-line"><span>Voorlopige drempel</span><strong id="thresholdValue">—</strong></div>
         <button id="btnToggleRecognition" class="primary-action">Start herkennen</button>
       </div>
     </footer>

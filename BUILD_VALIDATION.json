@@ -1,5 +1,8 @@
 {
   "duplicate_html_ids": [],
+  "missing_dom_references": [],
   "missing_imports": [],
-  "external_dependencies": []
+  "external_dependencies": [],
+  "stable_baseline": "0.2.0",
+  "candidate_version": "0.3.2"
 }
