@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
   <meta name="theme-color" content="#000000">
-  <title>Gift AR v0.4.0</title>
+  <title>Gift AR v0.4.1</title>
   <link rel="stylesheet" href="./css/app.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
     <div class="home-card">
       <div class="badge">Gift AR</div>
       <h1>Recognition Engine 2</h1>
-      <p>v0.4.0 — Feature-Based Prototype</p>
+      <p>v0.4.1 — Camera/Scan Alignment</p>
 
       <div id="homeStatus" class="status" role="status" aria-live="polite">App wordt gestart…</div>
 
@@ -23,8 +23,7 @@
       </div>
 
       <div class="note">
-        Deze versie vergelijkt niet langer het volledige beeld. Ze zoekt lokale kenmerkpunten,
-        matcht descriptors en controleert daarna of de geometrie overeenkomt.
+        Nieuw in deze versie: het herkenningsgebied wordt exact afgeleid uit het witte scanvak dat je op het scherm ziet.
       </div>
 
       <details>
@@ -85,6 +84,14 @@
             <div><span>Confidence</span><strong id="confidenceValue">—</strong></div>
           </div>
           <button id="btnToggleRecognition" type="button" class="primary-action">Start herkennen</button>
+        </div>
+
+        <div class="debug-preview-wrap">
+          <button id="btnTogglePreview" type="button" class="debug-toggle secondary">Toon analysebeeld</button>
+          <div id="analysisPreviewPanel" class="analysis-preview-panel hidden">
+            <div class="preview-title">Wat Recognition werkelijk analyseert</div>
+            <canvas id="debugCanvas" width="192" height="192"></canvas>
+          </div>
         </div>
       </footer>
     </div>

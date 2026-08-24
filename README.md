@@ -1,4 +1,4 @@
-# Gift AR — v0.4.0
+# Gift AR — v0.4.1
 
 ## Vaste app-link
 https://gasvdv-lab.github.io/Gift_app/
@@ -9,133 +9,89 @@ CANDIDATE
 ## Stabiele baseline
 v0.2.0 — Camera Core, bevestigd werkend op Android/Chrome.
 
-## Waarom v0.4.0
-De globale beeldvergelijking uit v0.3.x bleek onvoldoende robuust.
-Het correcte testobject zakte onder veranderde omstandigheden tot ongeveer 57–66%.
+## Doel
+v0.4.1 corrigeert de uitlijning tussen het zichtbare witte scanvak en het videobeeld dat Recognition werkelijk analyseert.
 
-Daarom wordt de Recognition Engine in v0.4.0 fundamenteel vervangen in plaats van verder kleine patches toe te voegen.
+## Aanleiding
+In v0.4.0 leek een object visueel niet gecentreerd te staan zonder de telefoon merkbaar zijwaarts te verplaatsen.
 
-## Nieuwe Recognition Engine 2
-v0.4.0 gebruikt een feature-based prototype zonder externe dependencies.
+Een deel daarvan kan fysieke camera-parallax zijn, maar technisch was er ook een risico:
+- de camera werd weergegeven met `object-fit: cover`;
+- Recognition analyseerde een vaste centrale crop van het ruwe videoframe;
+- die twee gebieden hoefden niet exact overeen te komen.
 
-Flow:
-1. centraal scanvak capturen;
-2. helderheid normaliseren;
-3. lokale hoek-/kenmerkpunten zoeken;
-4. voor elk kenmerk een compacte BRIEF-achtige descriptor maken;
-5. live descriptors matchen met geregistreerde descriptors;
-6. slechte matches verwijderen met een ratio-test;
-7. geometrische consistentie controleren met een similarity-transform;
-8. confidence bepalen uit het aantal geometrisch bevestigde matches.
+## Oplossing
+Recognition berekent nu expliciet:
+1. afmetingen van het ruwe cameraframe;
+2. de `object-fit: cover` schaal;
+3. de gecropte/verborgen videoranden;
+4. de positie van het witte scanvak op het scherm;
+5. de exacte corresponderende pixels in het ruwe cameraframe.
 
-## Diagnostiek
-Tijdens registratie:
-- aantal gevonden kenmerken;
-- spreiding over het scanvak;
-- herkenbaarheid: GOED / MATIG / MOEILIJK.
+Daardoor analyseert Recognition nu hetzelfde gebied dat de gebruiker in het witte kader ziet.
 
-Tijdens herkenning:
-- live kenmerken;
-- goede matches;
-- geometrisch bevestigde matches;
-- confidence: GEEN / LAAG / MIDDEL / HOOG.
+## Nieuwe debugfunctie
+In registratie- en herkenningsmodus is er een knop:
 
-`CADEAU HERKEND` verschijnt alleen bij MIDDEL of HOOG.
+`Toon analysebeeld`
 
-## Belangrijk
-Dit is nog steeds een onderzoeksprototype.
-Feature matching werkt normaal beter bij objecten met:
-- textuur;
-- scherpe contrasten;
-- unieke krassen/patronen;
-- linten/strikken/stickers.
+Daarmee verschijnt een kleine preview van exact het videobeeld dat Recognition analyseert.
 
-Een effen rode aansteker is bewust een moeilijk object.
-Een steen met een duidelijk patroon en strik is voor dit project waarschijnlijk een veel betere test.
+Gebruik dit om visueel te controleren:
+- object in wit kader;
+- object in analyse-preview;
+- beide moeten dezelfde uitsnede tonen.
 
-## Geen regressies bedoeld
-De volgende onderdelen blijven conceptueel onveranderd:
-- fullscreen camera-UI;
-- geen scroll in camera-modus;
-- terugknop;
-- camera cleanup;
-- LocalStorage;
-- Recognition is afzonderlijke module;
-- nog geen WebXR/AR;
-- geen externe dependencies.
+## Recognition Engine
+De feature-based engine uit v0.4.0 blijft verder gelijk:
+- lokale featurepunten;
+- BRIEF-achtige descriptors;
+- descriptor matching;
+- ratio filter;
+- geometrische verificatie;
+- confidence GEEN / LAAG / MIDDEL / HOOG.
 
-## Nieuwe opslag
-v0.4.0 gebruikt een nieuwe LocalStorage-sleutel.
-Registraties uit v0.3.x zijn niet compatibel en worden niet gebruikt.
+## Opslag
+v0.4.1 gebruikt een nieuwe registratieopslag.
+Registreer het testobject opnieuw.
 
-## Praktijktest Android/Chrome
+## Praktijktest
 
 ### A — regressie
 1. Open https://gasvdv-lab.github.io/Gift_app/
-2. Controleer versie 0.4.0 en baseline 0.2.0.
+2. Controleer versie 0.4.1.
 3. Voer Basistest uit.
-4. Open en sluit de camera minstens vijf keer.
-5. Zet Chrome tijdens cameragebruik naar de achtergrond.
-6. Keer terug en controleer dat de camera opnieuw normaal kan starten.
-7. Controleer dat fullscreen UI, terugknop en geen-scroll gedrag behouden zijn.
+4. Open/sluit camera enkele keren.
+5. Controleer fullscreen interface en terugknop.
 
-### B — registratie
-8. Kies liefst een object met veel unieke details. Voor het echte Gift AR-concept: steen + strik.
-9. Open Object registreren.
-10. Laat het object zoveel mogelijk het witte kader vullen.
-11. Registreer aanzicht 1.
-12. Noteer Kenmerken, Spreiding en Herkenbaarheid.
-13. Draai het object ongeveer 20–35 graden.
-14. Registreer aanzicht 2.
-15. Draai nogmaals en registreer aanzicht 3.
+### B — scan-uitlijning
+6. Open Object registreren.
+7. Plaats een duidelijk object exact in het midden van het witte kader.
+8. Tik `Toon analysebeeld`.
+9. Controleer het kleine analysebeeld.
+10. Het object moet daar op dezelfde manier gecentreerd staan als in het witte kader.
+11. Beweeg het object naar de linker rand van het witte kader.
+12. Controleer dat het ook links in de analyse-preview verschijnt.
+13. Herhaal rechts, boven en onder.
 
-Als een aanzicht minder dan 18 bruikbare kenmerken bevat, wordt het niet opgeslagen.
+Als dit niet overeenkomt, stuur een screenshot met zowel wit kader als analyse-preview.
 
-### C — juiste herkenning
-16. Open Object herkennen.
-17. Start herkennen.
-18. Richt op het juiste object.
-19. Test verschillende kleine hoeken en afstanden.
-20. Noteer Live kenmerken, Goede matches, Geometrisch bevestigd en Confidence.
+### C — registratie
+14. Wis oude registratie indien nodig.
+15. Registreer drie aanzichten.
+16. Noteer Kenmerken, Spreiding en Herkenbaarheid.
 
-### D — verkeerde objecten
-21. Richt op de oorspronkelijke achtergrond zonder cadeau.
-22. Richt op minstens drie compleet andere objecten.
-23. Test indien mogelijk een vergelijkbaar object.
-24. Noteer de hoogste aantallen Goede matches / Geometrisch bevestigd.
-25. Noteer of er een valse `CADEAU HERKEND` melding is.
-
-### E — robuustheid
-26. Verplaats het cadeau naar een andere achtergrond.
-27. Verander het licht.
-28. Draai het cadeau 45–90 graden.
-29. Ga dichter en verder.
-30. Test opnieuw.
-
-## Wat terugkoppelen
-Voor het juiste object:
-- gemiddeld aantal live kenmerken;
-- goede matches;
-- geometrisch bevestigde matches;
-- confidence.
-
-Voor het beste verkeerde object:
-- goede matches;
-- geometrisch bevestigde matches;
-- confidence.
-
-En vooral:
-- wordt het juiste object onder andere achtergrond/licht nog herkend?
-- ontstaat ergens een false positive?
+### D — herkenning
+17. Open Object herkennen.
+18. Zet eventueel analyse-preview aan.
+19. Start herkennen.
+20. Controleer of herkenning nu exact hetzelfde gebied gebruikt als het witte kader.
+21. Test juiste en verkeerde objecten.
 
 ## Succescriterium
-v0.4.0 is interessant genoeg om verder te ontwikkelen als het juiste object herhaaldelijk duidelijk meer geometrisch consistente matches oplevert dan verkeerde objecten.
+De kern van v0.4.1 is geslaagd wanneer:
+- zichtbaar scanvak en analyse-preview 1-op-1 overeenkomen;
+- geen softwarematige links/rechts-offset meer bestaat;
+- Camera Core stabiel blijft.
 
-Als dit onvoldoende blijkt, stappen we daarna niet terug naar globale beeldscores, maar onderzoeken we AI/vision embeddings als extra herkenningslaag.
-
-## Volgende kandidaat
-Bij voldoende resultaat:
-v0.4.1 — AI-assisted / hybrid recognition research.
-
-Bij onvoldoende resultaat:
-Recognition Engine 3 ontwerpen op basis van browsergeschikte vision embeddings of een hybride aanpak.
+Pas daarna beoordelen we opnieuw de kwaliteit van de feature-based Recognition Engine.
