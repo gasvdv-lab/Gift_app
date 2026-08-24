@@ -4,93 +4,90 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
   <meta name="theme-color" content="#000000">
-  <title>Gift AR v0.4.1</title>
+  <title>Gift AR v0.5.0</title>
   <link rel="stylesheet" href="./css/app.css">
 </head>
 <body>
-<main>
+<main id="appRoot">
   <section id="homeView" class="home-view">
     <div class="home-card">
       <div class="badge">Gift AR</div>
-      <h1>Recognition Engine 2</h1>
-      <p>v0.4.1 — Camera/Scan Alignment</p>
+      <h1>Registration Core 2.0</h1>
+      <p>v0.5.0 — foto → selectie → bevestigen → opslaan</p>
 
       <div id="homeStatus" class="status" role="status" aria-live="polite">App wordt gestart…</div>
 
       <div class="home-actions">
-        <button id="btnEnterRegister" type="button">Object registreren</button>
-        <button id="btnEnterRecognize" type="button" class="secondary">Object herkennen</button>
+        <button id="btnStartRegistration" type="button">Object registreren</button>
+        <button id="btnShowSaved" type="button" class="secondary">Opgeslagen aanzicht</button>
       </div>
 
-      <div class="note">
-        Nieuw in deze versie: het herkenningsgebied wordt exact afgeleid uit het witte scanvak dat je op het scherm ziet.
-      </div>
+      <section id="savedCard" class="saved-card hidden">
+        <h2>Opgeslagen aanzicht</h2>
+        <img id="savedImage" alt="Opgeslagen cadeau-selectie">
+        <div class="saved-meta">
+          <span id="savedSizeValue">—</span>
+          <span id="savedDateValue">—</span>
+        </div>
+        <button id="btnDeleteSaved" type="button" class="danger">Verwijder aanzicht</button>
+      </section>
 
       <details>
         <summary>Debug / versie</summary>
         <dl>
           <div><dt>Versie</dt><dd id="versionValue">—</dd></div>
           <div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
-          <div><dt>Aanzichten</dt><dd id="referenceCountHome">0 / 3</dd></div>
           <div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
+          <div><dt>Registratie</dt><dd id="registrationStateValue">geen</dd></div>
         </dl>
-        <div class="debug-actions">
-          <button id="btnSelfTest" type="button" class="secondary">Basistest</button>
-          <button id="btnClearReferencesHome" type="button" class="danger">Registratie wissen</button>
-        </div>
+        <button id="btnSelfTest" type="button" class="secondary full">Basistest</button>
       </details>
     </div>
   </section>
 
   <section id="cameraView" class="camera-view" aria-hidden="true">
     <video id="cameraPreview" playsinline muted></video>
-    <canvas id="analysisCanvas" width="96" height="96" hidden></canvas>
+    <canvas id="frozenCanvas"></canvas>
 
     <div class="camera-overlay">
       <header class="topbar">
         <button id="btnBack" type="button" class="icon-btn" aria-label="Terug">←</button>
         <div class="mode-title">
-          <strong id="modeTitle">Object registreren</strong>
-          <span id="modeSubtitle">Plaats het object groot in het kader</span>
+          <strong id="modeTitle">Neem een foto</strong>
+          <span id="modeSubtitle">Zorg dat het cadeau duidelijk zichtbaar is</span>
         </div>
         <span></span>
       </header>
 
-      <div class="scan-area">
-        <div id="scanBox" class="scan-box"></div>
+      <div id="selectionLayer" class="selection-layer hidden">
+        <div id="selectionBox" class="selection-box hidden">
+          <span class="handle nw" data-handle="nw"></span>
+          <span class="handle ne" data-handle="ne"></span>
+          <span class="handle sw" data-handle="sw"></span>
+          <span class="handle se" data-handle="se"></span>
+        </div>
       </div>
 
-      <div class="feedback">
-        <div id="cameraStatus">Camera starten…</div>
-        <div id="recognitionFeedback" class="recognition-feedback"></div>
-      </div>
+      <div id="cameraFeedback" class="camera-feedback" role="status" aria-live="polite"></div>
 
       <footer class="bottom-panel">
-        <div id="registerControls" class="mode-controls">
-          <div class="diagnostics">
-            <div><span>Aanzichten</span><strong id="referenceCountCamera">0 / 3</strong></div>
-            <div><span>Kenmerken</span><strong id="featureCountValue">—</strong></div>
-            <div><span>Spreiding</span><strong id="coverageValue">—</strong></div>
-            <div><span>Herkenbaarheid</span><strong id="qualityValue">—</strong></div>
-          </div>
-          <button id="btnCaptureReference" type="button" class="primary-action">Registreer aanzicht</button>
+        <div id="captureControls" class="mode-controls">
+          <button id="btnTakePhoto" type="button" class="shutter" aria-label="Foto nemen"></button>
         </div>
 
-        <div id="recognizeControls" class="mode-controls hidden">
-          <div class="diagnostics">
-            <div><span>Live kenmerken</span><strong id="liveFeatureCountValue">—</strong></div>
-            <div><span>Goede matches</span><strong id="goodMatchesValue">—</strong></div>
-            <div><span>Geometrisch bevestigd</span><strong id="inliersValue">—</strong></div>
-            <div><span>Confidence</span><strong id="confidenceValue">—</strong></div>
-          </div>
-          <button id="btnToggleRecognition" type="button" class="primary-action">Start herkennen</button>
+        <div id="selectControls" class="mode-controls hidden">
+          <button id="btnResetSelection" type="button" class="secondary">Nieuwe selectie</button>
+          <button id="btnPreviewSelection" type="button">Bekijk selectie</button>
         </div>
 
-        <div class="debug-preview-wrap">
-          <button id="btnTogglePreview" type="button" class="debug-toggle secondary">Toon analysebeeld</button>
-          <div id="analysisPreviewPanel" class="analysis-preview-panel hidden">
-            <div class="preview-title">Wat Recognition werkelijk analyseert</div>
-            <canvas id="debugCanvas" width="192" height="192"></canvas>
+        <div id="confirmControls" class="mode-controls hidden">
+          <div class="preview-block">
+            <div class="preview-label">Dit is wat Gift AR onthoudt</div>
+            <canvas id="cropPreviewCanvas" width="320" height="240"></canvas>
+          </div>
+          <div class="confirm-grid">
+            <button id="btnEditSelection" type="button" class="secondary">Aanpassen</button>
+            <button id="btnConfirmSelection" type="button">Bevestig selectie</button>
           </div>
         </div>
       </footer>

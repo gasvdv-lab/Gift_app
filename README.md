@@ -1,4 +1,4 @@
-# Gift AR — v0.4.1
+# Gift AR — v0.5.0
 
 ## Vaste app-link
 https://gasvdv-lab.github.io/Gift_app/
@@ -10,88 +10,86 @@ CANDIDATE
 v0.2.0 — Camera Core, bevestigd werkend op Android/Chrome.
 
 ## Doel
-v0.4.1 corrigeert de uitlijning tussen het zichtbare witte scanvak en het videobeeld dat Recognition werkelijk analyseert.
+v0.5.0 introduceert Registration Core 2.0.
 
-## Aanleiding
-In v0.4.0 leek een object visueel niet gecentreerd te staan zonder de telefoon merkbaar zijwaarts te verplaatsen.
+De oude registratie via een live scanvak wordt verlaten. De maker neemt nu eerst een foto, bevriest het frame en duidt daarna zelf exact aan welk fysiek object het cadeau is.
 
-Een deel daarvan kan fysieke camera-parallax zijn, maar technisch was er ook een risico:
-- de camera werd weergegeven met `object-fit: cover`;
-- Recognition analyseerde een vaste centrale crop van het ruwe videoframe;
-- die twee gebieden hoefden niet exact overeen te komen.
+## Nieuwe flow
+1. Object registreren
+2. Camera fullscreen
+3. Foto nemen
+4. Beeld bevriest
+5. Rechthoek rond cadeau tekenen
+6. Selectie eventueel aanpassen via hoekpunten
+7. `Bekijk selectie`
+8. Preview: `Dit is wat Gift AR onthoudt`
+9. Bevestigen of aanpassen
+10. Eén aanzicht lokaal opslaan
 
-## Oplossing
-Recognition berekent nu expliciet:
-1. afmetingen van het ruwe cameraframe;
-2. de `object-fit: cover` schaal;
-3. de gecropte/verborgen videoranden;
-4. de positie van het witte scanvak op het scherm;
-5. de exacte corresponderende pixels in het ruwe cameraframe.
+## Nieuw
+- Shutterknop
+- Bevroren cameraframe
+- Touchselectie
+- Vier resize-handles
+- Selectie opnieuw maken
+- Crop-preview
+- Bevestigen / aanpassen
+- Eén opgeslagen aanzicht in LocalStorage
+- Aanzicht blijft na herladen beschikbaar
+- Opgeslagen aanzicht bekijken of verwijderen
 
-Daardoor analyseert Recognition nu hetzelfde gebied dat de gebruiker in het witte kader ziet.
+## Bewust nog NIET
+- meerdere aanzichten;
+- AI-segmentatie;
+- automatische objectcontour;
+- recognition;
+- quality scoring;
+- Gift Visual Profile;
+- WebXR / AR.
 
-## Nieuwe debugfunctie
-In registratie- en herkenningsmodus is er een knop:
+## Waarom één aanzicht?
+Deze versie test uitsluitend de nieuwe registratiebasis. Multi-view wordt pas toegevoegd nadat foto → selectie → preview → opslag op de telefoon stabiel werkt.
 
-`Toon analysebeeld`
-
-Daarmee verschijnt een kleine preview van exact het videobeeld dat Recognition analyseert.
-
-Gebruik dit om visueel te controleren:
-- object in wit kader;
-- object in analyse-preview;
-- beide moeten dezelfde uitsnede tonen.
-
-## Recognition Engine
-De feature-based engine uit v0.4.0 blijft verder gelijk:
-- lokale featurepunten;
-- BRIEF-achtige descriptors;
-- descriptor matching;
-- ratio filter;
-- geometrische verificatie;
-- confidence GEEN / LAAG / MIDDEL / HOOG.
-
-## Opslag
-v0.4.1 gebruikt een nieuwe registratieopslag.
-Registreer het testobject opnieuw.
-
-## Praktijktest
-
-### A — regressie
+## Android/Chrome testvolgorde
 1. Open https://gasvdv-lab.github.io/Gift_app/
-2. Controleer versie 0.4.1.
+2. Controleer versie 0.5.0.
 3. Voer Basistest uit.
-4. Open/sluit camera enkele keren.
-5. Controleer fullscreen interface en terugknop.
+4. Open `Object registreren`.
+5. Controleer dat de achtercamera fullscreen opent.
+6. Neem een foto.
+7. Controleer dat exact dat beeld bevriest.
+8. Sleep een rechthoek rond het cadeau.
+9. Pas minstens twee hoekpunten aan.
+10. Tik `Bekijk selectie`.
+11. Controleer dat de preview exact overeenkomt met de gemaakte selectie.
+12. Tik `Aanpassen` en verander de selectie.
+13. Bekijk opnieuw.
+14. Tik `Bevestig selectie`.
+15. Controleer op het startscherm dat één aanzicht opgeslagen is.
+16. Open `Opgeslagen aanzicht`.
+17. Controleer dat de juiste crop zichtbaar is.
+18. Herlaad de pagina.
+19. Controleer dat het aanzicht behouden blijft.
+20. Start opnieuw een registratie en ga met Terug naar huis.
+21. Controleer dat de camera correct stopt.
+22. Start registratie opnieuw.
+23. Zet Chrome naar de achtergrond.
+24. Keer terug en controleer dat de camera geen vastloper veroorzaakt.
+25. Verwijder tenslotte het opgeslagen aanzicht en controleer dat de status terug `geen` wordt.
 
-### B — scan-uitlijning
-6. Open Object registreren.
-7. Plaats een duidelijk object exact in het midden van het witte kader.
-8. Tik `Toon analysebeeld`.
-9. Controleer het kleine analysebeeld.
-10. Het object moet daar op dezelfde manier gecentreerd staan als in het witte kader.
-11. Beweeg het object naar de linker rand van het witte kader.
-12. Controleer dat het ook links in de analyse-preview verschijnt.
-13. Herhaal rechts, boven en onder.
+## Succescriteria
+v0.5.0 is geslaagd wanneer:
+- foto betrouwbaar bevriest;
+- selectie via touch praktisch werkt;
+- selectie aangepast kan worden;
+- preview exact overeenkomt met de selectie;
+- alleen de gekozen crop wordt opgeslagen;
+- opgeslagen crop herladen overleeft;
+- camera lifecycle van v0.2.0 intact blijft.
 
-Als dit niet overeenkomt, stuur een screenshot met zowel wit kader als analyse-preview.
+## Volgende fase
+Na bevestiging:
+v0.5.1 — Multi-view Registration.
 
-### C — registratie
-14. Wis oude registratie indien nodig.
-15. Registreer drie aanzichten.
-16. Noteer Kenmerken, Spreiding en Herkenbaarheid.
-
-### D — herkenning
-17. Open Object herkennen.
-18. Zet eventueel analyse-preview aan.
-19. Start herkennen.
-20. Controleer of herkenning nu exact hetzelfde gebied gebruikt als het witte kader.
-21. Test juiste en verkeerde objecten.
-
-## Succescriterium
-De kern van v0.4.1 is geslaagd wanneer:
-- zichtbaar scanvak en analyse-preview 1-op-1 overeenkomen;
-- geen softwarematige links/rechts-offset meer bestaat;
-- Camera Core stabiel blijft.
-
-Pas daarna beoordelen we opnieuw de kwaliteit van de feature-based Recognition Engine.
+Daarna:
+AI Object Isolation → AI Registration Assistant → Dynamic View Coverage → Gift Visual Profile → Hybrid Recognition.
