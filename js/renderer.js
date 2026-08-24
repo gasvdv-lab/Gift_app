@@ -1,0 +1,4 @@
+export const rendererModule = Object.freeze({
+  name: "Renderer",
+  ready: true
+});
