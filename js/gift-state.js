@@ -1,6 +1,1 @@
-export function createGiftState() {
-  return Object.freeze({
-    activeGiftId: null,
-    status: "idle"
-  });
-}
+export function createGiftState(){return{activeGiftId:null,status:"idle",cameraStatus:"stopped"};}

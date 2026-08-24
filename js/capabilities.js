@@ -1,8 +1,1 @@
-export function getBasicCapabilities() {
-  return {
-    secureContext: window.isSecureContext,
-    modules: "supported",
-    webxrApiPresent: "xr" in navigator,
-    mediaDevicesPresent: Boolean(navigator.mediaDevices)
-  };
-}
+export function getBasicCapabilities(){return{secureContext:window.isSecureContext,webxrApiPresent:"xr" in navigator,mediaDevicesPresent:Boolean(navigator.mediaDevices),getUserMediaPresent:Boolean(navigator.mediaDevices?.getUserMedia)};}
