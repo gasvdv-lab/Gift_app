@@ -1,58 +1,54 @@
-# Gift AR — v0.1.0
+# Gift AR — v0.2.0
+
+## Vaste app-link
+https://gasvdv-lab.github.io/Gift_app/
+
+## Status
+CANDIDATE
+
+## Stabiele baseline
+v0.1.0 — bevestigd werkend op Android/Chrome.
 
 ## Doel van deze versie
-Dit is uitsluitend het technische projectfundament. Er is bewust nog geen camera, objectherkenning of AR-functionaliteit.
+v0.2.0 voegt uitsluitend een betrouwbare Camera Core toe bovenop de stabiele v0.1.0-basis.
 
-## Architectuur
-De volgende onderdelen zijn conceptueel en in de broncode gescheiden:
-- Gift / Project State
-- Camera / Input
-- Recognition Engine
-- XR Adapter
-- Environment / Placement
-- Experience Engine
-- Renderer
-- Asset Manager
-- Capability Detection
-- UI
+## Nieuwe functionaliteit
+- Achtercamera aanvragen via `getUserMedia`
+- Camera starten, stoppen en herstarten
+- Camerastream correct vrijgeven door alle tracks te stoppen
+- Videoreferentie opruimen bij stoppen
+- Camera automatisch stoppen wanneer de pagina naar de achtergrond gaat
+- Cleanup bij `pagehide`
+- Statusfeedback voor cameratoestemming en fouten
+- Detectie van `getUserMedia`
+- Touchvriendelijke camerabediening
 
-## Wat v0.1.0 doet
-- Mobiele startpagina
-- ES-module structuur
-- DOM-validatie bij opstarten
-- Eenvoudige self-test
-- Detectie van secure context, WebXR API en MediaDevices
-- Touchvriendelijke basis-UI
-- Geen externe dependencies
+## Bestaande functies die geraakt kunnen worden
+De app-opstart, UI, DOM-referenties, capability detection en eventlisteners zijn uitgebreid. Recognition, XR, Placement, Experience, Renderer en Assets blijven passief.
 
-## Wat bewust NIET aanwezig is
-- Cameratoegang
-- Objectregistratie
-- Objectherkenning
-- WebXR-sessie
+## Bewust NIET aanwezig
+- Objectregistratie of objectherkenning
+- WebXR-sessie of hit-testing
 - AR-rendering
-- Opslag/backend
+- Gift-links
+- Backend/opslag
 
-## GitHub Pages
-Upload de INHOUD van deze map naar de root van je GitHub Pages-repository.
-De site moet via HTTPS geopend worden.
+## Android/Chrome praktijktest
+1. Open https://gasvdv-lab.github.io/Gift_app/
+2. Controleer dat `Gift AR v0.2.0 is correct gestart.` verschijnt.
+3. Open Versie-informatie en controleer versie `0.2.0`, baseline `0.1.0` en `7 modules geladen`.
+4. Tik op `Voer basistest uit` en controleer: basistest geslaagd, secure context = ja, MediaDevices = ja, getUserMedia = ja.
+5. Tik `Start camera`, geef toestemming en controleer dat de achtercamera zichtbaar wordt.
+6. Tik `Stop camera` en controleer dat het beeld verdwijnt.
+7. Herhaal start/stop minstens 5 keer.
+8. Start de camera en tik `Herstart camera`; herhaal dit 3 keer.
+9. Start de camera, zet Chrome naar de achtergrond, keer terug en controleer dat de camera gestopt is.
+10. Start daarna opnieuw de camera; die moet normaal openen.
+11. Sluit het tabblad volledig, open de vaste link opnieuw en start de camera opnieuw.
+12. Start de camera, herlaad de pagina en controleer daarna opnieuw de camerastart.
 
-## Testvolgorde Android/Chrome
-1. Open de GitHub Pages-link in Chrome.
-2. Controleer dat `Gift AR v0.1.0 is correct gestart.` verschijnt.
-3. Open `Versie-informatie` en controleer dat versie `0.1.0` staat.
-4. Controleer dat `7 modules geladen` wordt weergegeven.
-5. Tik op `Voer basistest uit`.
-6. Controleer dat `Basistest geslaagd` verschijnt.
-7. Op GitHub Pages moet `HTTPS/secure context: ja` verschijnen.
-8. Sluit het tabblad volledig.
-9. Open de link opnieuw en herhaal stap 2 t/m 6.
-10. Herlaad de pagina meerdere keren.
-11. Zet Chrome kort op de achtergrond, keer terug en voer de test opnieuw uit.
-12. Draai het toestel indien toegestaan en controleer dat de UI bruikbaar blijft.
-
-## Stabiliteitsstatus
-CANDIDATE — wordt pas STABLE nadat de praktijktest op het doeltoestel bevestigd is.
+## Succescriteria
+v0.2.0 mag alleen STABLE worden wanneer de achtercamera correct opent, start/stop 5 keer werkt, herstart werkt, achtergrond/voorgrond geen vastloper veroorzaakt, herladen en opnieuw openen werken en de v0.1.0-basistest blijft slagen.
 
 ## Volgende fase
-Na bevestiging van v0.1.0: betrouwbare camera-core.
+Na bevestiging van v0.2.0: v0.3.0 — eerste browsergebaseerde objectherkennings-proof-of-concept.
