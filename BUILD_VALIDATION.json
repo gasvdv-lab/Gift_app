@@ -1,7 +1,11 @@
 {
-  "version": "0.5.1R",
+  "version": "0.6.0",
+  "stable_baseline": "0.2.0",
   "duplicate_html_ids": [],
+  "missing_dom_references": [],
   "missing_imports": [],
+  "missing_required_modules": [],
+  "external_dependencies": [],
   "js_files": [
     "ai-assistance.js",
     "app.js",
@@ -10,6 +14,7 @@
     "capabilities.js",
     "experience.js",
     "gift-state.js",
+    "object-isolation.js",
     "placement.js",
     "recognition.js",
     "registration.js",
@@ -17,5 +22,6 @@
     "ui.js",
     "xr-adapter.js"
   ],
-  "external_dependencies": []
+  "readme_pages_link": true,
+  "roadmap_included": true
 }
