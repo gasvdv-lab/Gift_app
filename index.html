@@ -1,83 +1,9 @@
-<!doctype html>
-<html lang="nl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
-<meta name="theme-color" content="#000000">
-<title>Gift AR v0.5.1</title>
-<link rel="stylesheet" href="./css/app.css">
-</head>
-<body>
-<main>
-<section id="homeView" class="home-view">
-<div class="home-card">
-<div class="badge">Gift AR</div>
-<h1>Multi-view Registration</h1>
-<p>v0.5.1 — meerdere aanzichten van één cadeau</p>
-<div id="homeStatus" class="status" role="status">App wordt gestart…</div>
-<div class="home-actions">
-<button id="btnStartRegistration">Registratie openen</button>
-<button id="btnShowGallery" class="secondary">Bekijk aanzichten</button>
-</div>
-<section id="galleryCard" class="gallery-card hidden">
-<div class="gallery-head"><h2>Geregistreerde aanzichten</h2><strong id="galleryCountValue">0 / 5</strong></div>
-<div id="galleryGrid" class="gallery-grid"></div>
-<div class="gallery-actions">
-<button id="btnContinueRegistration">Nieuw aanzicht</button>
-<button id="btnFinishRegistration" class="secondary">Registratie afronden</button>
-</div>
-</section>
-<details>
-<summary>Debug / versie</summary>
-<dl>
-<div><dt>Versie</dt><dd id="versionValue">—</dd></div>
-<div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
-<div><dt>Aanzichten</dt><dd id="referenceCountHome">0 / 5</dd></div>
-<div><dt>Status</dt><dd id="registrationStateValue">leeg</dd></div>
-<div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
-</dl>
-<button id="btnSelfTest" class="secondary full">Basistest</button>
-</details>
-</div>
-</section>
-
-<section id="cameraView" class="camera-view" aria-hidden="true">
-<video id="cameraPreview" playsinline muted></video>
-<canvas id="frozenCanvas"></canvas>
-<div class="camera-overlay">
-<header class="topbar">
-<button id="btnBack" class="icon-btn" aria-label="Terug">←</button>
-<div class="mode-title"><strong id="modeTitle">Neem een foto</strong><span id="modeSubtitle">Aanzicht 1</span></div>
-<div class="step-counter" id="viewCounterTop">0 / 5</div>
-</header>
-<div id="selectionLayer" class="selection-layer hidden">
-<div id="selectionBox" class="selection-box hidden">
-<span class="handle nw" data-handle="nw"></span><span class="handle ne" data-handle="ne"></span>
-<span class="handle sw" data-handle="sw"></span><span class="handle se" data-handle="se"></span>
-</div>
-</div>
-<div id="cameraFeedback" class="camera-feedback"></div>
-<footer class="bottom-panel">
-<div id="captureControls" class="mode-controls">
-<div class="hint">Neem een duidelijke nieuwe zijde/positie.</div>
-<button id="btnTakePhoto" class="shutter" aria-label="Foto nemen"></button>
-</div>
-<div id="selectControls" class="mode-controls hidden">
-<div class="hint">Trek een kader rond alleen het cadeau.</div>
-<div class="two-col"><button id="btnResetSelection" class="secondary">Nieuwe selectie</button><button id="btnPreviewSelection">Bekijk selectie</button></div>
-</div>
-<div id="confirmControls" class="mode-controls hidden">
-<div class="preview-block"><div class="preview-label">Dit aanzicht wordt opgeslagen</div><canvas id="cropPreviewCanvas" width="320" height="240"></canvas></div>
-<div class="two-col"><button id="btnEditSelection" class="secondary">Aanpassen</button><button id="btnConfirmSelection">Aanzicht opslaan</button></div>
-</div>
-<div id="afterSaveControls" class="mode-controls hidden">
-<div id="afterSaveMessage" class="after-save-message"></div>
-<div class="two-col"><button id="btnBackToGallery" class="secondary">Bekijk aanzichten</button><button id="btnNextView">Volgend aanzicht</button></div>
-</div>
-</footer>
-</div>
-</section>
-</main>
-<script type="module" src="./js/app.js"></script>
-</body>
-</html>
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1"><title>Gift AR v0.5.1R</title><link rel="stylesheet" href="./css/app.css"></head><body>
+<section id="home"><main><b>Gift AR</b><h1>Multi-view Registration</h1><p>v0.5.1R — complete modulaire build</p><p id="status">Startklaar.</p>
+<button id="start">Nieuw aanzicht</button><button id="galleryBtn">Aanzichten</button><button id="finish">Registratie afronden</button><button id="test">Basistest</button>
+<div id="gallery"></div></main></section>
+<section id="cam" hidden><video id="video" playsinline muted></video><canvas id="freeze"></canvas><button id="back">←</button><div id="title">Neem een foto</div>
+<div id="selectLayer" hidden><div id="box" hidden></div></div>
+<footer><button id="shot">●</button><div id="selectBtns" hidden><button id="reset">Nieuwe selectie</button><button id="preview">Bekijk selectie</button></div>
+<div id="confirmBtns" hidden><p>Dit aanzicht wordt opgeslagen</p><canvas id="crop"></canvas><button id="edit">Aanpassen</button><button id="save">Aanzicht opslaan</button></div></footer></section>
+<script type="module" src="./js/app.js"></script></body></html>

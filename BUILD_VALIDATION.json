@@ -1,8 +1,21 @@
 {
+  "version": "0.5.1R",
   "duplicate_html_ids": [],
-  "missing_dom_references": [],
   "missing_imports": [],
-  "external_dependencies": [],
-  "candidate_version": "0.5.1",
-  "stable_baseline": "0.2.0"
+  "js_files": [
+    "ai-assistance.js",
+    "app.js",
+    "assets.js",
+    "camera.js",
+    "capabilities.js",
+    "experience.js",
+    "gift-state.js",
+    "placement.js",
+    "recognition.js",
+    "registration.js",
+    "renderer.js",
+    "ui.js",
+    "xr-adapter.js"
+  ],
+  "external_dependencies": []
 }
