@@ -1,1 +1,1 @@
-export const xrAdapterModule={name:"WebXR",ready:true,active:false};
+export const xrAdapterModule=Object.freeze({name:"WebXR Adapter",ready:true,active:false});

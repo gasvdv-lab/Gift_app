@@ -1,1 +1,1 @@
-export const assetsModule={name:"Assets",ready:true,active:false};
+export const assetsModule=Object.freeze({name:"Asset Manager",ready:true,active:false});

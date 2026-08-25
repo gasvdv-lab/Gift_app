@@ -1,1 +1,1 @@
-export const recognitionModule={name:"Recognition",ready:true,active:false};
+export const recognitionModule=Object.freeze({name:"Recognition Engine",ready:true,active:false});

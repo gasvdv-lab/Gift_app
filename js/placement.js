@@ -1,1 +1,1 @@
-export const placementModule={name:"Placement",ready:true,active:false};
+export const placementModule=Object.freeze({name:"World / Placement",ready:true,active:false});

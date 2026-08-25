@@ -1,1 +1,1 @@
-export const experienceModule={name:"Experience",ready:true,active:false};
+export const experienceModule=Object.freeze({name:"Experience Engine",ready:true,active:false});

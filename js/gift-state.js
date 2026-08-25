@@ -1,1 +1,1 @@
-export const giftStateModule={name:"Project State",ready:true,active:false};
+export const giftStateModule=Object.freeze({name:"Gift / Project State",ready:true,active:false});
