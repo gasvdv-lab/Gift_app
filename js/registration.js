@@ -1,76 +1,11 @@
-const STORAGE_KEY="gift-ar-v0.5.0-registration";
-
-export const registrationModule=Object.freeze({name:"Registration Core 2.0",ready:true});
-
-export function saveRegistration(data){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-}
-export function loadRegistration(){
-  try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    return raw?JSON.parse(raw):null;
-  }catch{return null}
-}
-export function clearRegistration(){
-  localStorage.removeItem(STORAGE_KEY);
-}
-
-export function visibleVideoRect(video){
-  const vw=video.videoWidth,vh=video.videoHeight;
-  const rect=video.getBoundingClientRect();
-  if(!vw||!vh||!rect.width||!rect.height)throw new Error("Camera-afmetingen niet beschikbaar.");
-  const scale=Math.max(rect.width/vw,rect.height/vh);
-  const renderedWidth=vw*scale;
-  const renderedHeight=vh*scale;
-  return {
-    videoWidth:vw,videoHeight:vh,rect,scale,
-    offsetX:(rect.width-renderedWidth)/2,
-    offsetY:(rect.height-renderedHeight)/2
-  };
-}
-
-export function freezeVisibleFrame(video,canvas){
-  const m=visibleVideoRect(video);
-  const cssW=Math.round(m.rect.width);
-  const cssH=Math.round(m.rect.height);
-
-  const sx=(0-m.offsetX)/m.scale;
-  const sy=(0-m.offsetY)/m.scale;
-  const sw=cssW/m.scale;
-  const sh=cssH/m.scale;
-
-  canvas.width=Math.max(1,Math.round(sw));
-  canvas.height=Math.max(1,Math.round(sh));
-  const ctx=canvas.getContext("2d");
-  ctx.drawImage(video,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
-
-  return {width:canvas.width,height:canvas.height};
-}
-
-export function cropSelection(frozenCanvas, selectionRect, displayRect, previewCanvas){
-  const sxScale=frozenCanvas.width/displayRect.width;
-  const syScale=frozenCanvas.height/displayRect.height;
-
-  const sx=Math.max(0,(selectionRect.left-displayRect.left)*sxScale);
-  const sy=Math.max(0,(selectionRect.top-displayRect.top)*syScale);
-  const sw=Math.min(frozenCanvas.width-sx,selectionRect.width*sxScale);
-  const sh=Math.min(frozenCanvas.height-sy,selectionRect.height*syScale);
-
-  if(sw<10||sh<10)throw new Error("Selectie is te klein.");
-
-  const maxW=640;
-  const factor=Math.min(1,maxW/sw);
-  previewCanvas.width=Math.max(1,Math.round(sw*factor));
-  previewCanvas.height=Math.max(1,Math.round(sh*factor));
-
-  const ctx=previewCanvas.getContext("2d");
-  ctx.clearRect(0,0,previewCanvas.width,previewCanvas.height);
-  ctx.drawImage(frozenCanvas,sx,sy,sw,sh,0,0,previewCanvas.width,previewCanvas.height);
-
-  return {
-    source:{x:sx,y:sy,width:sw,height:sh},
-    dataUrl:previewCanvas.toDataURL("image/jpeg",0.88),
-    width:Math.round(sw),
-    height:Math.round(sh)
-  };
-}
+const KEY="gift-ar-v0.5.1-registration-profile",MIN=3,MAX=5;
+export const registrationModule=Object.freeze({name:"Multi-view Registration",ready:true});
+const empty=()=>({version:2,minViews:MIN,maxViews:MAX,status:"in_progress",views:[]});
+export function loadProfile(){try{const r=localStorage.getItem(KEY);if(!r)return empty();const p=JSON.parse(r);return p&&Array.isArray(p.views)?p:empty()}catch{return empty()}}
+export function saveProfile(p){localStorage.setItem(KEY,JSON.stringify(p))}
+export function addView(v){const p=loadProfile();if(p.views.length>=MAX)throw new Error("Maximum van 5 aanzichten bereikt.");p.views.push({id:`view-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,order:p.views.length+1,dataUrl:v.dataUrl,width:v.width,height:v.height,sourceRect:v.sourceRect,savedAt:new Date().toISOString()});p.status=p.views.length>=MIN?"ready_to_finish":"in_progress";saveProfile(p);return p}
+export function removeView(id){const p=loadProfile();p.views=p.views.filter(v=>v.id!==id);p.views.forEach((v,i)=>v.order=i+1);p.status=p.views.length>=MIN?"ready_to_finish":"in_progress";saveProfile(p);return p}
+export function finishProfile(){const p=loadProfile();if(p.views.length<MIN)throw new Error("Registreer minstens 3 aanzichten.");p.status="completed";p.completedAt=new Date().toISOString();saveProfile(p);return p}
+export function getLimits(){return{min:MIN,max:MAX}}
+export function freezeVisibleFrame(video,canvas){const vw=video.videoWidth,vh=video.videoHeight,r=video.getBoundingClientRect();if(!vw||!vh)throw new Error("Camera-afmetingen niet beschikbaar.");const scale=Math.max(r.width/vw,r.height/vh),rw=vw*scale,rh=vh*scale,ox=(r.width-rw)/2,oy=(r.height-rh)/2,sx=(0-ox)/scale,sy=(0-oy)/scale,sw=r.width/scale,sh=r.height/scale;canvas.width=Math.round(sw);canvas.height=Math.round(sh);canvas.getContext("2d").drawImage(video,sx,sy,sw,sh,0,0,canvas.width,canvas.height)}
+export function cropSelection(frozen,sel,display,preview){const xs=frozen.width/display.width,ys=frozen.height/display.height,sx=Math.max(0,(sel.left-display.left)*xs),sy=Math.max(0,(sel.top-display.top)*ys),sw=Math.min(frozen.width-sx,sel.width*xs),sh=Math.min(frozen.height-sy,sel.height*ys);if(sw<10||sh<10)throw new Error("Selectie is te klein.");const factor=Math.min(1,640/sw);preview.width=Math.max(1,Math.round(sw*factor));preview.height=Math.max(1,Math.round(sh*factor));preview.getContext("2d").drawImage(frozen,sx,sy,sw,sh,0,0,preview.width,preview.height);return{sourceRect:{x:sx,y:sy,width:sw,height:sh},dataUrl:preview.toDataURL("image/jpeg",.88),width:Math.round(sw),height:Math.round(sh)}}
