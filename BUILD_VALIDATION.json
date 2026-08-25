@@ -3,8 +3,6 @@
   "missing_dom_references": [],
   "missing_imports": [],
   "external_dependencies": [],
-  "stable_baseline": "0.2.0",
-  "candidate_version": "0.5.0",
-  "roadmap_included": true,
-  "fixed_pages_link_in_readme": true
+  "candidate_version": "0.5.1",
+  "stable_baseline": "0.2.0"
 }

@@ -1,100 +1,83 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
-  <meta name="theme-color" content="#000000">
-  <title>Gift AR v0.5.0</title>
-  <link rel="stylesheet" href="./css/app.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#000000">
+<title>Gift AR v0.5.1</title>
+<link rel="stylesheet" href="./css/app.css">
 </head>
 <body>
-<main id="appRoot">
-  <section id="homeView" class="home-view">
-    <div class="home-card">
-      <div class="badge">Gift AR</div>
-      <h1>Registration Core 2.0</h1>
-      <p>v0.5.0 — foto → selectie → bevestigen → opslaan</p>
+<main>
+<section id="homeView" class="home-view">
+<div class="home-card">
+<div class="badge">Gift AR</div>
+<h1>Multi-view Registration</h1>
+<p>v0.5.1 — meerdere aanzichten van één cadeau</p>
+<div id="homeStatus" class="status" role="status">App wordt gestart…</div>
+<div class="home-actions">
+<button id="btnStartRegistration">Registratie openen</button>
+<button id="btnShowGallery" class="secondary">Bekijk aanzichten</button>
+</div>
+<section id="galleryCard" class="gallery-card hidden">
+<div class="gallery-head"><h2>Geregistreerde aanzichten</h2><strong id="galleryCountValue">0 / 5</strong></div>
+<div id="galleryGrid" class="gallery-grid"></div>
+<div class="gallery-actions">
+<button id="btnContinueRegistration">Nieuw aanzicht</button>
+<button id="btnFinishRegistration" class="secondary">Registratie afronden</button>
+</div>
+</section>
+<details>
+<summary>Debug / versie</summary>
+<dl>
+<div><dt>Versie</dt><dd id="versionValue">—</dd></div>
+<div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
+<div><dt>Aanzichten</dt><dd id="referenceCountHome">0 / 5</dd></div>
+<div><dt>Status</dt><dd id="registrationStateValue">leeg</dd></div>
+<div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
+</dl>
+<button id="btnSelfTest" class="secondary full">Basistest</button>
+</details>
+</div>
+</section>
 
-      <div id="homeStatus" class="status" role="status" aria-live="polite">App wordt gestart…</div>
-
-      <div class="home-actions">
-        <button id="btnStartRegistration" type="button">Object registreren</button>
-        <button id="btnShowSaved" type="button" class="secondary">Opgeslagen aanzicht</button>
-      </div>
-
-      <section id="savedCard" class="saved-card hidden">
-        <h2>Opgeslagen aanzicht</h2>
-        <img id="savedImage" alt="Opgeslagen cadeau-selectie">
-        <div class="saved-meta">
-          <span id="savedSizeValue">—</span>
-          <span id="savedDateValue">—</span>
-        </div>
-        <button id="btnDeleteSaved" type="button" class="danger">Verwijder aanzicht</button>
-      </section>
-
-      <details>
-        <summary>Debug / versie</summary>
-        <dl>
-          <div><dt>Versie</dt><dd id="versionValue">—</dd></div>
-          <div><dt>Baseline</dt><dd id="baselineValue">—</dd></div>
-          <div><dt>Camera</dt><dd id="cameraStateValue">gestopt</dd></div>
-          <div><dt>Registratie</dt><dd id="registrationStateValue">geen</dd></div>
-        </dl>
-        <button id="btnSelfTest" type="button" class="secondary full">Basistest</button>
-      </details>
-    </div>
-  </section>
-
-  <section id="cameraView" class="camera-view" aria-hidden="true">
-    <video id="cameraPreview" playsinline muted></video>
-    <canvas id="frozenCanvas"></canvas>
-
-    <div class="camera-overlay">
-      <header class="topbar">
-        <button id="btnBack" type="button" class="icon-btn" aria-label="Terug">←</button>
-        <div class="mode-title">
-          <strong id="modeTitle">Neem een foto</strong>
-          <span id="modeSubtitle">Zorg dat het cadeau duidelijk zichtbaar is</span>
-        </div>
-        <span></span>
-      </header>
-
-      <div id="selectionLayer" class="selection-layer hidden">
-        <div id="selectionBox" class="selection-box hidden">
-          <span class="handle nw" data-handle="nw"></span>
-          <span class="handle ne" data-handle="ne"></span>
-          <span class="handle sw" data-handle="sw"></span>
-          <span class="handle se" data-handle="se"></span>
-        </div>
-      </div>
-
-      <div id="cameraFeedback" class="camera-feedback" role="status" aria-live="polite"></div>
-
-      <footer class="bottom-panel">
-        <div id="captureControls" class="mode-controls">
-          <button id="btnTakePhoto" type="button" class="shutter" aria-label="Foto nemen"></button>
-        </div>
-
-        <div id="selectControls" class="mode-controls hidden">
-          <button id="btnResetSelection" type="button" class="secondary">Nieuwe selectie</button>
-          <button id="btnPreviewSelection" type="button">Bekijk selectie</button>
-        </div>
-
-        <div id="confirmControls" class="mode-controls hidden">
-          <div class="preview-block">
-            <div class="preview-label">Dit is wat Gift AR onthoudt</div>
-            <canvas id="cropPreviewCanvas" width="320" height="240"></canvas>
-          </div>
-          <div class="confirm-grid">
-            <button id="btnEditSelection" type="button" class="secondary">Aanpassen</button>
-            <button id="btnConfirmSelection" type="button">Bevestig selectie</button>
-          </div>
-        </div>
-      </footer>
-    </div>
-  </section>
+<section id="cameraView" class="camera-view" aria-hidden="true">
+<video id="cameraPreview" playsinline muted></video>
+<canvas id="frozenCanvas"></canvas>
+<div class="camera-overlay">
+<header class="topbar">
+<button id="btnBack" class="icon-btn" aria-label="Terug">←</button>
+<div class="mode-title"><strong id="modeTitle">Neem een foto</strong><span id="modeSubtitle">Aanzicht 1</span></div>
+<div class="step-counter" id="viewCounterTop">0 / 5</div>
+</header>
+<div id="selectionLayer" class="selection-layer hidden">
+<div id="selectionBox" class="selection-box hidden">
+<span class="handle nw" data-handle="nw"></span><span class="handle ne" data-handle="ne"></span>
+<span class="handle sw" data-handle="sw"></span><span class="handle se" data-handle="se"></span>
+</div>
+</div>
+<div id="cameraFeedback" class="camera-feedback"></div>
+<footer class="bottom-panel">
+<div id="captureControls" class="mode-controls">
+<div class="hint">Neem een duidelijke nieuwe zijde/positie.</div>
+<button id="btnTakePhoto" class="shutter" aria-label="Foto nemen"></button>
+</div>
+<div id="selectControls" class="mode-controls hidden">
+<div class="hint">Trek een kader rond alleen het cadeau.</div>
+<div class="two-col"><button id="btnResetSelection" class="secondary">Nieuwe selectie</button><button id="btnPreviewSelection">Bekijk selectie</button></div>
+</div>
+<div id="confirmControls" class="mode-controls hidden">
+<div class="preview-block"><div class="preview-label">Dit aanzicht wordt opgeslagen</div><canvas id="cropPreviewCanvas" width="320" height="240"></canvas></div>
+<div class="two-col"><button id="btnEditSelection" class="secondary">Aanpassen</button><button id="btnConfirmSelection">Aanzicht opslaan</button></div>
+</div>
+<div id="afterSaveControls" class="mode-controls hidden">
+<div id="afterSaveMessage" class="after-save-message"></div>
+<div class="two-col"><button id="btnBackToGallery" class="secondary">Bekijk aanzichten</button><button id="btnNextView">Volgend aanzicht</button></div>
+</div>
+</footer>
+</div>
+</section>
 </main>
-
 <script type="module" src="./js/app.js"></script>
 </body>
 </html>

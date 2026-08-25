@@ -1,4 +1,4 @@
-# Gift AR — v0.5.0
+# Gift AR — v0.5.1
 
 ## Vaste app-link
 https://gasvdv-lab.github.io/Gift_app/
@@ -10,86 +10,51 @@ CANDIDATE
 v0.2.0 — Camera Core, bevestigd werkend op Android/Chrome.
 
 ## Doel
-v0.5.0 introduceert Registration Core 2.0.
-
-De oude registratie via een live scanvak wordt verlaten. De maker neemt nu eerst een foto, bevriest het frame en duidt daarna zelf exact aan welk fysiek object het cadeau is.
-
-## Nieuwe flow
-1. Object registreren
-2. Camera fullscreen
-3. Foto nemen
-4. Beeld bevriest
-5. Rechthoek rond cadeau tekenen
-6. Selectie eventueel aanpassen via hoekpunten
-7. `Bekijk selectie`
-8. Preview: `Dit is wat Gift AR onthoudt`
-9. Bevestigen of aanpassen
-10. Eén aanzicht lokaal opslaan
+v0.5.1 breidt Registration Core 2.0 uit naar Multi-view Registration.
 
 ## Nieuw
-- Shutterknop
-- Bevroren cameraframe
-- Touchselectie
-- Vier resize-handles
-- Selectie opnieuw maken
-- Crop-preview
-- Bevestigen / aanpassen
-- Eén opgeslagen aanzicht in LocalStorage
-- Aanzicht blijft na herladen beschikbaar
-- Opgeslagen aanzicht bekijken of verwijderen
+- Minimum 3 en maximum 5 aanzichten
+- Elk aanzicht heeft een eigen foto en handmatige selectie
+- Galerij met thumbnails
+- Elk aanzicht afzonderlijk verwijderen
+- Automatische hernummering
+- Na 3 aanzichten mag registratie afgerond worden
+- Aanzicht 4 en 5 zijn optioneel
+- Data blijft in LocalStorage bewaard
 
-## Bewust nog NIET
-- meerdere aanzichten;
-- AI-segmentatie;
-- automatische objectcontour;
-- recognition;
-- quality scoring;
-- Gift Visual Profile;
-- WebXR / AR.
+## Bewust nog niet
+- AI-segmentatie
+- automatische kwaliteitscontrole
+- dynamic view coverage
+- AI embeddings
+- hybrid recognition
+- WebXR/AR
 
-## Waarom één aanzicht?
-Deze versie test uitsluitend de nieuwe registratiebasis. Multi-view wordt pas toegevoegd nadat foto → selectie → preview → opslag op de telefoon stabiel werkt.
-
-## Android/Chrome testvolgorde
+## Testvolgorde Android/Chrome
 1. Open https://gasvdv-lab.github.io/Gift_app/
-2. Controleer versie 0.5.0.
+2. Controleer versie 0.5.1.
 3. Voer Basistest uit.
-4. Open `Object registreren`.
-5. Controleer dat de achtercamera fullscreen opent.
-6. Neem een foto.
-7. Controleer dat exact dat beeld bevriest.
-8. Sleep een rechthoek rond het cadeau.
-9. Pas minstens twee hoekpunten aan.
-10. Tik `Bekijk selectie`.
-11. Controleer dat de preview exact overeenkomt met de gemaakte selectie.
-12. Tik `Aanpassen` en verander de selectie.
-13. Bekijk opnieuw.
-14. Tik `Bevestig selectie`.
-15. Controleer op het startscherm dat één aanzicht opgeslagen is.
-16. Open `Opgeslagen aanzicht`.
-17. Controleer dat de juiste crop zichtbaar is.
-18. Herlaad de pagina.
-19. Controleer dat het aanzicht behouden blijft.
-20. Start opnieuw een registratie en ga met Terug naar huis.
-21. Controleer dat de camera correct stopt.
-22. Start registratie opnieuw.
-23. Zet Chrome naar de achtergrond.
-24. Keer terug en controleer dat de camera geen vastloper veroorzaakt.
-25. Verwijder tenslotte het opgeslagen aanzicht en controleer dat de status terug `geen` wordt.
+4. Registreer aanzicht 1 met foto → selectie → preview → opslaan.
+5. Kies Volgend aanzicht en draai het cadeau.
+6. Registreer aanzicht 2.
+7. Registreer aanzicht 3.
+8. Controleer dat afronden nu mogelijk is.
+9. Bekijk de galerij en controleer drie verschillende crops.
+10. Voeg aanzicht 4 en 5 toe.
+11. Controleer dat geen zesde aanzicht kan worden toegevoegd.
+12. Verwijder één aanzicht en controleer hernummering.
+13. Voeg opnieuw een aanzicht toe.
+14. Herlaad de pagina en controleer dat alle data behouden is.
+15. Test camera terug/achtergrond/voorgrond opnieuw.
+16. Rond de registratie af en herlaad opnieuw.
 
 ## Succescriteria
-v0.5.0 is geslaagd wanneer:
-- foto betrouwbaar bevriest;
-- selectie via touch praktisch werkt;
-- selectie aangepast kan worden;
-- preview exact overeenkomt met de selectie;
-- alleen de gekozen crop wordt opgeslagen;
-- opgeslagen crop herladen overleeft;
-- camera lifecycle van v0.2.0 intact blijft.
+- 3 tot 5 onafhankelijke aanzichten werken
+- iedere crop is correct
+- verwijderen beschadigt andere views niet
+- hernummering klopt
+- opslag overleeft reload
+- camera lifecycle blijft intact
 
 ## Volgende fase
-Na bevestiging:
-v0.5.1 — Multi-view Registration.
-
-Daarna:
-AI Object Isolation → AI Registration Assistant → Dynamic View Coverage → Gift Visual Profile → Hybrid Recognition.
+v0.6.0 — AI Object Isolation / Segmentation.
