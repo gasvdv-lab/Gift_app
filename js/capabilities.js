@@ -1,1 +1,1 @@
-export function getCapabilities(){return{secureContext:window.isSecureContext,camera:!!navigator.mediaDevices?.getUserMedia,localStorage:(()=>{try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return true}catch{return false}})()}}
+export const capabilitiesModule={name:"Capabilities",ready:true};export function capabilities(){return{secure:window.isSecureContext,camera:!!navigator.mediaDevices?.getUserMedia,storage:!!window.localStorage}}

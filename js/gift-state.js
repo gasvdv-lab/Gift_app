@@ -1,1 +1,1 @@
-export function createGiftState(){return{mode:"home",cameraStatus:"stopped",recognitionStatus:"idle"}}
+export const giftStateModule={name:"Project State",ready:true,active:false};

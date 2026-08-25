@@ -1,0 +1,1 @@
+export const aiAssistanceModule={name:"AI Assistance",ready:true,active:false};
